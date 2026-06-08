@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haze Sharp | Dashboard</title>
+    
+    <!-- Ícones e Fontes -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1E40AF;
+            --primary-glow: rgba(30, 64, 175, 0.4);
+            --primary-dim: rgba(30, 64, 175, 0.1);
+            --bg-dark: #050508;
+            --bg-panel: rgba(12, 12, 20, 0.8);
+            --border: rgba(255, 255, 255, 0.06);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font-head: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .ambient-glow {
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(30, 64, 175, 0.08) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        .sidebar {
+            width: 280px;
+            height: 100%;
+            background: var(--bg-panel);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            z-index: 10;
+            transition: transform 0.4s var(--ease);
+        }
+
+        .brand {
+            font-family: var(--font-head);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -1px;
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .profile-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-img-wrap {
+            position: relative;
+            width: 80px; height: 80px;
+            margin: 0 auto 15px;
+        }
+
+        .profile-img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            transition: 0.5s var(--ease);
+        }
+
+        .profile-status {
+            position: absolute;
+            bottom: 2px; right: 2px;
+            width: 14px; height: 14px;
+            background: var(--success);
+            border-radius: 50%;
+            border: 3px solid #1a1a1a;
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .profile-card:hover .profile-img {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(30, 64, 175, 0.2);
+        }
+
+        .nav-item {
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s var(--ease);
+            border: 1px solid transparent;
+        }
+
+        .nav-item i { width: 20px; text-align: center; font-size: 18px; }
+
+        .nav-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.03);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-color: rgba(30, 64, 175, 0.2);
+            font-weight: 600;
+            box-shadow: 0 0 30px rgba(30, 64, 175, 0.05);
+        }
+
+        .content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .page-header { margin-bottom: 40px; animation: fadeInDown 0.8s var(--ease); }
+        .page-title { font-family: var(--font-head); font-size: 38px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+        .page-subtitle { color: var(--text-muted); font-size: 15px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--bg-panel);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            transition: all 0.4s var(--ease);
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(30, 64, 175, 0.05), transparent 40%);
+            opacity: 0; transition: 0.4s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(30, 64, 175, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        .card:hover::before { opacity: 1; }
+
+        .card-icon {
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--primary);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 10px; }
+        .card-value { font-size: 24px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; font-family: var(--font-head); }
+
+        .key-box {
+            font-family: var(--font-code);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .key-box:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(30, 64, 175, 0.05);
+            box-shadow: 0 0 20px rgba(30, 64, 175, 0.1);
+        }
+
+        .key-hidden { filter: blur(4px); transition: 0.3s; }
+        .key-box:hover .key-hidden { filter: blur(0px); }
+        
+        .copy-hint {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: var(--primary); color: #fff;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase;
+            transform: translateY(100%);
+            transition: 0.3s;
+        }
+        .key-box:hover .copy-hint { transform: translateY(0); }
+
+        .dl-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+        .dl-item:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); transform: translateX(5px); }
+
+        .btn-action {
+            background: var(--primary); color: #fff; padding: 10px 24px; border-radius: 8px;
+            text-decoration: none; font-weight: 700; font-size: 14px;
+            display: inline-flex; align-items: center; gap: 8px; transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.3);
+        }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4); background: #2563EB; }
+
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .user-mini {
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
+            padding: 20px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;
+            transition: 0.3s;
+        }
+        .user-mini:hover { border-color: var(--primary); transform: translateY(-5px); background: rgba(30, 64, 175, 0.02); }
+        .user-mini img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 15px; border: 2px solid transparent; object-fit: cover; }
+        .user-mini:hover img { border-color: var(--primary); }
+
+        .alert-box {
+            background: rgba(30, 64, 175, 0.1); border-left: 4px solid var(--primary);
+            padding: 20px; border-radius: 8px; margin-bottom: 30px;
+            display: flex; align-items: center; gap: 15px; color: #fff;
+            animation: slideIn 0.5s var(--ease);
+        }
+
+        #loader {
+            position: fixed; inset: 0; background: #050508; z-index: 999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; gap: 20px; transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid rgba(30, 64, 175, 0.3);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050508; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 20px; }
+            .content { padding: 25px; }
+            .nav-item { padding: 12px; }
+            .brand { justify-content: center; }
+            .ambient-glow { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div style="font-family: var(--font-head); letter-spacing: 2px; font-size: 14px;">CARREGANDO SISTEMA</div>
+    </div>
+
+    <div class="ambient-glow"></div>
+
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fas fa-key"></i> Haze Sharp
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-img-wrap">
+                <img id="sb-img" src="https://cdn.discordapp.com/embed/avatars/0.png" class="profile-img">
+                <div class="profile-status"></div>
+            </div>
+            <h3 id="sb-name" style="font-size: 16px; margin-bottom: 5px;">Usuário</h3>
+            <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-code);">CLIENTE VIP</span>
+        </div>
+
+        <nav>
+            <div class="nav-item active" onclick="nav('home')">
+                <i class="fas fa-layer-group"></i> <span>Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="nav('downloads')">
+                <i class="fas fa-cloud-download-alt"></i> <span>Downloads</span>
+            </div>
+            <div class="nav-item" onclick="nav('community')">
+                <i class="fas fa-users"></i> <span>Comunidade</span>
+            </div>
+        </nav>
+
+        <a href="/auth/logout" class="nav-item" style="margin-top: auto; color: var(--danger); border: 1px solid rgba(255, 77, 77, 0.1);">
+            <i class="fas fa-power-off"></i> <span>Desconectar</span>
+        </a>
+    </div>
+
+    <div class="content">
+        <div class="alert-box" id="global-alert" style="display: none;">
+            <i class="fas fa-bell" style="color: var(--primary); font-size: 20px;"></i>
+            <div>
+                <strong style="display: block; color: var(--primary); margin-bottom: 2px;">Comunicado do Sistema</strong>
+                <span id="alert-msg" style="font-size: 14px; opacity: 0.9;"></span>
+            </div>
+        </div>
+
+        <div id="view-home">
+            <div class="page-header">
+                <h1 class="page-title">Visão Geral</h1>
+                <p class="page-subtitle">Bem-vindo ao painel de controle da sua assinatura.</p>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-check"></i></div>
+                    <div class="card-label">Status da Assinatura</div>
+                    <div class="card-value" style="color: var(--success);">
+                        ATIVO <span style="font-size: 12px; background: rgba(16,185,129,0.1); padding: 4px 8px; border-radius: 4px; margin-left: auto;">Online</span>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
+                        Expira em: <span id="u-expiry" style="color: #fff;">Calculando...</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-key"></i></div>
+                    <div class="card-label">Sua Licença Pessoal</div>
+                    <div class="key-box" id="key-container" onclick="copyKey()">
+                        <span id="u-key" class="key-hidden">""""-""""-""""-""""</span>
+                        <div class="copy-hint" id="copy-text">Clique para Copiar</div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: var(--text-muted); text-align: center;">
+                        <i class="fas fa-lock" style="font-size: 10px;"></i> Acesso vinculado ao HWID
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-fingerprint"></i></div>
+                    <div class="card-label">Identidade Digital</div>
+                    <div class="card-value" style="font-size: 18px;">
+                        <span id="u-hwid-status">Verificando...</span>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
+                        Discord ID: <span id="u-discord" style="font-family: var(--font-code);">...</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+                        HWID: <span id="u-hwid-value" style="font-family: var(--font-code); color: var(--text-muted);">---</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+                        IP: <span id="u-ip" style="font-family: var(--font-code); color: var(--text-muted);">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="font-family: var(--font-head); margin-bottom: 20px; font-size: 22px;">Atualizações Recentes</h3>
+            <div class="card" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                <div id="latest-dl">
+                    <div style="color: var(--text-muted); font-size: 14px;">Buscando versões...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-downloads" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Downloads</h1>
+                <p class="page-subtitle">Acesse os arquivos mais recentes do software.</p>
+            </div>
+            <div id="downloads-list"></div>
+        </div>
+
+        <div id="view-community" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Comunidade</h1>
+                <p class="page-subtitle">Usuários ativos na plataforma Haze Sharp.</p>
+            </div>
+            <div class="user-grid" id="community-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let userData = {};
+
+        function nav(viewName) {
+            ['home', 'downloads', 'community'].forEach(v => {
+                document.getElementById('view-'+v).style.display = (v === viewName) ? 'block' : 'none';
+            });
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            if(viewName === 'downloads') loadDownloads();
+            if(viewName === 'community') loadCommunity();
+        }
+
+        function copyKey() {
+            if(!userData.license_key) return;
+            const key = userData.license_key;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = key;
+            
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if(successful) showCopySuccess();
+            } catch (err) {
+                console.error('Erro ao copiar', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess() {
+            const hint = document.getElementById('copy-text');
+            hint.innerText = "COPIADO COM SUCESSO!";
+            hint.style.background = "var(--success)";
+            hint.style.transform = "translateY(0)";
+            
+            setTimeout(() => {
+                hint.innerText = "Clique para Copiar";
+                hint.style.background = "var(--primary)";
+                hint.style.transform = ""; 
+            }, 2000);
+        }
+
+        async function initSystem() {
+            try {
+                fetch('/api/client/settings').then(r => r.json()).then(data => {
+                    if(data.global_msg) {
+                        document.getElementById('global-alert').style.display = 'flex';
+                        document.getElementById('alert-msg').innerText = data.global_msg;
+                    }
+                });
+
+                const res = await fetch('/api/client/me');
+                if(res.status !== 200) { window.location.href = '/'; return; }
+                
+                userData = await res.json();
+
+                document.getElementById('sb-name').innerText = userData.username;
+                document.getElementById('sb-img').src = userData.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                document.getElementById('u-expiry').innerText = userData.expiry_date;
+                document.getElementById('u-key').innerText = userData.license_key;
+                document.getElementById('u-discord').innerText = userData.discord_id || "Não vinculado";
+
+                const hwidEl = document.getElementById('u-hwid-status');
+                const hwidValEl = document.getElementById('u-hwid-value');
+                const ipEl = document.getElementById('u-ip');
+                if(userData.hwid) {
+                    hwidEl.innerHTML = '<span style="color:var(--success)">Vinculado & Seguro</span>';
+                    hwidValEl.innerText = userData.hwid;
+                    hwidValEl.style.color = 'var(--success)';
+                } else {
+                    hwidEl.innerHTML = '<span style="color:var(--primary)">Aguardando Loader...</span>';
+                    hwidValEl.innerText = '---';
+                }
+                if(userData.ip_address) {
+                    ipEl.innerText = userData.ip_address;
+                }
+
+                loadDownloads(true);
+
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                }, 800);
+
+            } catch (error) { console.error("Erro fatal:", error); }
+        }
+
+        async function loadDownloads(isHome = false) {
+            const container = isHome ? document.getElementById('latest-dl') : document.getElementById('downloads-list');
+            if(!isHome) container.innerHTML = '<div style="color:#666">Carregando arquivos...</div>';
+
+            try {
+                const res = await fetch('/api/downloads');
+                const data = await res.json();
+
+                if(!data || data.length === 0) {
+                    container.innerHTML = '<div style="padding:20px; color:var(--text-muted)">Nenhum download disponível.</div>';
+                    return;
+                }
+
+                const list = isHome ? [data[0]] : data;
+
+                container.innerHTML = list.map(item => `
+                    <div class="dl-item" style="${isHome ? 'background:var(--bg-panel); border:1px solid var(--border);' : ''}">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:45px; height:45px; background:rgba(30,64,175,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:20px;">
+                                <i class="${item.icon || 'fas fa-cube'}"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:700; color:#fff; font-size:16px;">${item.name}</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                                    v${item.version} ${item.description || 'Sem descrição'}
+                                </div>
+                            </div>
+                        </div>
+                        <a href="${item.url}" target="_blank" class="btn-action">
+                            <i class="fas fa-download"></i> <span style="display:${window.innerWidth < 600 ? 'none' : 'inline'}">BAIXAR</span>
+                        </a>
+                    </div>
+                `).join('');
+
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadCommunity() {
+            const container = document.getElementById('community-list');
+            container.innerHTML = '<div style="color:#666; font-size:14px;">Carregando...</div>';
+
+            try {
+                const res = await fetch('/api/client/users');
+                if (!res.ok) throw new Error("Falha na API");
+                
+                const users = await res.json();
+                
+                if (!users || users.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-muted)">Nenhum membro encontrado.</div>';
+                    return;
+                }
+
+                container.innerHTML = users.map(u => `
+                    <div class="user-mini">
+                        <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}">
+                        <div style="font-weight:600; color:#fff;">${u.username || 'Usuário'}</div>
+                        <div style="font-size:11px; margin-top:5px; padding:2px 10px; border-radius:10px; background:${u.role === 'owner' || u.role === 'admin' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; color:${u.role === 'owner' || u.role === 'admin' ? '#fff' : '#888'}; font-weight:700;">
+                            ${u.role ? u.role.toUpperCase() : 'CLIENTE'}
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { 
+                console.error(e); 
+                container.innerHTML = '<div style="color:var(--danger)">Erro ao carregar lista de membros. Verifique o console.</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initSystem);
+    </script>
+</body>
+</html>

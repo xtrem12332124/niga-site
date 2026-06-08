@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haze Sharp | Command Center</title>
+    
+    <!-- Icons & Fonts -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root { 
+            --primary: #1E40AF; --primary-glow: rgba(30, 64, 175, 0.35); --bg-dark: #050508; --bg-panel: rgba(12, 12, 20, 0.9); --border: rgba(255, 255, 255, 0.08); --text-main: #ffffff; --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444;
+        }
+        * { box-sizing: border-box; outline: none; user-select: none; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        body { margin: 0; font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); background-image: radial-gradient(circle at 10% 20%, rgba(30, 64, 175, 0.05) 0%, transparent 40%); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 270px; background: var(--bg-panel); backdrop-filter: blur(15px); border-right: 1px solid var(--border); padding: 40px 25px; display: flex; flex-direction: column; z-index: 100; }
+        .logo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 50px; }
+        .brand-text { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; color: #fff; letter-spacing: 2px; filter: drop-shadow(0 0 15px var(--primary-glow)); transition: transform 0.4s; }
+        .brand-text span { color: var(--primary); }
+        .brand-text:hover { transform: scale(1.05); }
+        .nav-item { padding: 14px 20px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: var(--text-muted); display: flex; gap: 15px; align-items: center; font-size: 14px; font-weight: 500; transition: 0.3s; }
+        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.03); transform: translateX(5px); }
+        .nav-item.active { background: linear-gradient(90deg, rgba(30, 64, 175, 0.12) 0%, transparent 100%); color: var(--primary); border-left: 3px solid var(--primary); font-weight: 600; }
+        
+        .content { flex: 1; padding: 40px; overflow-y: auto; position: relative; }
+        .view-section { display: none; animation: fadeUp 0.5s ease forwards; opacity: 0; }
+        .view-section.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { margin: 0 0 30px 0; font-weight: 800; font-size: 28px; display: flex; align-items: center; gap: 15px; color: #fff; }
+        .card { background: var(--bg-panel); border: 1px solid var(--border); padding: 30px; border-radius: 18px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 30px; }
+        
+        .stat-card { display: flex; flex-direction: column; justify-content: center; height: 140px; position: relative; }
+        .stat-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-val { font-size: 42px; font-weight: 800; color: #fff; margin-top: 15px; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .stat-icon { position: absolute; right: 30px; font-size: 50px; color: var(--primary); opacity: 0.15; }
+        .table-responsive { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead { background: rgba(255,255,255,0.03); }
+        th { text-align: left; color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 700; padding: 18px 24px; letter-spacing: 1px; }
+        td { padding: 18px 24px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #e4e4e7; vertical-align: middle; }
+        tr:hover td { background: rgba(30, 64, 175, 0.03); }
+        
+        .avatar-container { position: relative; width: 40px; height: 40px; cursor: pointer; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #333; transition: 0.3s; }
+        .user-avatar:hover { transform: scale(1.1); border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        input, select, textarea { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 12px 16px; border-radius: 10px; width: 100%; font-family: inherit; font-size: 14px; margin-bottom: 15px; }
+        input:focus { border-color: var(--primary); }
+        label { display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+        button { border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; text-transform: uppercase; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 5px 15px rgba(30, 64, 175, 0.3); }
+        .btn-primary:hover { background: #2563EB; transform: translateY(-2px); }
+        .btn-danger-solid { background: var(--danger); color: #fff; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.2); }
+        .btn-danger-solid:hover { background: #ff6666; transform: translateY(-2px); }
+        .btn-sm { padding: 8px 12px; font-size: 11px; }
+        .btn-icon { width: 34px; height: 34px; padding: 0; border-radius: 8px; background: rgba(255,255,255,0.05); color: #aaa; }
+        .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-icon.danger:hover { background: var(--danger); color: #fff; }
+        .blur-data { filter: blur(5px); transition: 0.3s; cursor: pointer; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-family: monospace; }
+        .blur-data:hover { filter: blur(0); background: rgba(30, 64, 175, 0.1); color: var(--primary); }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; }
+        .bg-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .bg-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+        #notification-area { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); border-left: 4px solid var(--primary); color: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 280px; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 14px; font-weight: 500; }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.success { border-left-color: var(--success); }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateX(20px); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 900; display: none; justify-content: center; align-items: center; }
+        .modal { background: #0f0f10; border: 1px solid var(--border); padding: 30px; width: 450px; border-radius: 20px; box-shadow: 0 0 50px rgba(0, 0, 0, 0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-align: center; }
+        .modal h2 { margin-top: 10px; color: #fff; font-size: 22px; }
+        .modal p { color: #aaa; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        .modal-icon { font-size: 40px; margin-bottom: 15px; color: var(--primary); }
+        .key-display-box { background: #000; border: 1px solid var(--primary); border-radius: 10px; padding: 5px; display: flex; align-items: center; margin-bottom: 20px; }
+        .key-display-box input { background: transparent; border: none; color: var(--primary); font-family: monospace; font-size: 18px; font-weight: bold; text-align: center; letter-spacing: 1px; margin-bottom: 0; }
+        .key-display-box button { background: var(--primary); color: #fff; padding: 10px; border-radius: 8px; width: 40px; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="brand-text">Haze Sharp</div>
+        </div>
+        <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
+        <div class="nav-item" onclick="nav('users', this)"><i class="fas fa-users"></i> Usuários</div>
+        <div class="nav-item" onclick="nav('files', this)"><i class="fas fa-folder-open"></i> Downloads</div>
+        <div class="nav-item" onclick="nav('bot', this)"><i class="fab fa-discord"></i> Config Bot</div>
+        <div class="nav-item" onclick="nav('sys', this)"><i class="fas fa-cogs"></i> Sistema</div>
+        <div style="flex:1"></div>
+        <div class="nav-item" onclick="location.href='/auth/logout'" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Sair</div>
+    </div>
+    
+    <div class="content">
+        <div id="view-dash" class="view-section active">
+            <h1><i class="fas fa-rocket" style="color:var(--primary)"></i> Visão Geral</h1>
+            <div class="grid-3">
+                <div class="card stat-card">
+                    <div class="stat-title">Total de Licenças</div>
+                    <div class="stat-val" id="d-total">...</div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-title">Status do Sistema</div>
+                    <div class="stat-val" id="d-status" style="font-size: 24px; color: var(--success); margin-top: 20px;">ONLINE</div>
+                    <i class="fas fa-wifi stat-icon"></i>
+                </div>
+            </div>
+            <div class="grid-3" style="grid-template-columns: 2fr 1fr;">
+                <div class="card">
+                    <h3 style="margin:0 0 20px 0; color:#aaa; font-size:14px">LOGINS RECENTES (7 DIAS)</h3>
+                    <div class="chart-container"><canvas id="loginChart"></canvas></div>
+                </div>
+                <div class="card" style="padding:0; overflow:hidden">
+                    <div style="padding:15px; background:rgba(255,255,255,0.05); border-bottom:1px solid #222; font-size:12px; font-weight:bold; color:#aaa">LIVE LOGS (LOADER)</div>
+                    <div id="tb-loader-logs" style="padding:10px; overflow-y:auto; height:260px; font-family:monospace; font-size:12px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-users" class="view-section">
+            <h1><i class="fas fa-user-shield" style="color:var(--primary)"></i> Usuários</h1>
+            <div class="card">
+                <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap">
+                    <div style="flex:2; position:relative">
+                        <i class="fas fa-search" style="position:absolute; left:15px; top:13px; color:#666"></i>
+                        <input id="user-search" placeholder="Pesquisar Key, Nome..." style="padding-left:40px; margin-bottom:0;" onkeyup="filterUsers()">
+                    </div>
+                    <div style="display:flex; gap:10px; flex:1">
+                        <select id="gen-days" style="margin-bottom:0;"><option value="30">30 Dias</option><option value="lifetime">Vitalício</option></select>
+                        <button class="btn-primary" onclick="generateKey()">+ Key</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Avatar</th><th>Usuário</th><th>License Key</th><th>HWID</th><th>Expiração</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="tb-users"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-files" class="view-section">
+            <h1><i class="fas fa-cloud" style="color:var(--primary)"></i> Downloads</h1>
+            <div class="card">
+                <div style="display:flex; gap:15px; margin-bottom:15px">
+                    <input id="f-name" placeholder="Nome" style="margin-bottom:0">
+                    <input id="f-url" placeholder="URL" style="margin-bottom:0">
+                    <input id="f-ver" placeholder="Versão" style="margin-bottom:0">
+                    <button class="btn-primary" onclick="addFile()">Upload</button>
+                </div>
+                <div class="table-responsive">
+                    <table><thead><tr><th>Nome</th><th>Link</th><th>Versão</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-files"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-bot" class="view-section">
+            <h1><i class="fab fa-discord" style="color:var(--primary)"></i> Configuração do Bot</h1>
+            <div class="grid-3">
+                <div class="card" style="grid-column: span 2;">
+                    <h3>Credenciais do Bot</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
+                        <div><label>Bot Token</label><input type="password" id="bot-token" placeholder="Token do Bot"></div>
+                        <div><label>Client ID (Bot ID)</label><input type="text" id="bot-client-id" placeholder="ID do Aplicativo"></div>
+                        <div><label>ID do Canal de Voz (24/7)</label><input type="text" id="bot-voice-id" placeholder="ID do Canal"></div>
+                        <div><label>ID do Dono (Admin)</label><input type="text" id="bot-owner-id" placeholder="Seu ID do Discord"></div>
+                    </div>
+                    <div style="display:flex; gap:15px; margin-top:20px">
+                        <button class="btn-primary" onclick="saveBotSettings()">Salvar Configurações</button>
+                        <button class="btn-danger-solid" onclick="restartBot()">Reiniciar Bot</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Status do Bot</h3>
+                    <p style="color:#aaa; font-size:13px; line-height:1.6">O bot precisa ser reiniciado após trocar o Token. Use a aba "Console" da hospedagem para ver logs de erro.</p>
+                    <div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px;"><div style="font-weight:bold; color:var(--success)"> BOT RODANDO</div><div style="font-size:12px; color:#666; margin-top:5px">Haze Sharp System</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-sys" class="view-section">
+            <h1><i class="fas fa-server" style="color:var(--primary)"></i> Sistema</h1>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>Mensagem Global</h3>
+                    <textarea id="sys-msg" rows="4"></textarea>
+                    <button class="btn-primary" style="width:100%; margin-top:15px" onclick="saveSettings()">Salvar</button>
+                </div>
+                <div class="card">
+                    <h3>Lockpick (Manutenção)</h3>
+                    <div id="maint-txt" style="margin-bottom:15px; font-weight:bold; font-size:18px">...</div>
+                    <button id="btn-maint" style="width:100%" onclick="toggleMaint()">Alternar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-area"></div>
+    <div id="modal-confirm" class="modal-overlay"><div class="modal"><i class="fas fa-exclamation-triangle modal-icon" style="color:var(--primary)"></i><h2 id="confirm-title">Confirmação</h2><p id="confirm-desc">Tem certeza?</p><div style="display:flex; gap:15px; justify-content:center"><button onclick="closeModal('modal-confirm')" style="background:#333; color:#fff">Cancelar</button><button id="confirm-btn-action" class="btn-primary">Confirmar</button></div></div></div>
+    <div id="modal-days" class="modal-overlay"><div class="modal"><i class="fas fa-calendar-plus modal-icon"></i><h2>Adicionar Dias</h2><p>Quantos dias deseja adicionar?</p><input type="number" id="modal-days-input" value="7" style="margin:15px 0; text-align:center; font-size:20px"><div style="display:flex; gap:10px; justify-content:center"><button onclick="closeModal('modal-days')" style="background:#333; color:#fff">Cancelar</button><button class="btn-primary" onclick="confirmAddDays()">Confirmar</button></div></div></div>
+    <div id="modal-key" class="modal-overlay"><div class="modal"><i class="fas fa-check-circle modal-icon" style="color:var(--success)"></i><h2>Key Gerada!</h2><p>Copie a licença abaixo:</p><div class="key-display-box"><input type="text" id="generated-key-input" readonly><button onclick="copyGeneratedKey()"><i class="fas fa-copy"></i></button></div><button class="btn-primary" onclick="closeModal('modal-key')">Concluído</button></div></div>
+
+    <script>
+        let usersData = [], maint = false, chartInstance = null, currentUserId = null;
+        function nav(id, el) { document.querySelectorAll('.view-section').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active'); if(id==='dash')loadDash(); if(id==='users')loadUsers(); if(id==='files')loadFiles(); if(id==='bot')loadBotSettings(); if(id==='sys')loadSys(); }
+        async function loadDash() { const res=await fetch('/api/admin/dashboard'); if(res.status===403)return location.href='/'; const data=await res.json(); document.getElementById('d-total').innerText=data.total; const s=document.getElementById('d-status'); s.innerText=data.maintenance==='true'?"EM MANUTENÇÃO":"ONLINE"; s.style.color=data.maintenance==='true'?"var(--danger)":"var(--success)"; document.getElementById('tb-loader-logs').innerHTML=data.loaderLogs.map(l=>`<div style="margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px"><span style="color:#00e676">> ${l.details.replace('Login C++: ','')}</span><span style="float:right; color:#555">${l.ip_address}</span></div>`).join(''); const ctx=document.getElementById('loginChart').getContext('2d'); if(chartInstance)chartInstance.destroy(); const dates=data.chartData.map(d=>d.date.split('-').slice(1).reverse().join('/')); const counts=data.chartData.map(d=>d.count); let grad=ctx.createLinearGradient(0,0,0,300); grad.addColorStop(0,'rgba(30,64,175,0.4)'); grad.addColorStop(1,'transparent'); chartInstance=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[{label:'Logins',data:counts,borderColor:'#1E40AF',backgroundColor:grad,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:false},scales:{x:{grid:{display:false}},y:{grid:{color:'#222'}}}}}); }
+        async function loadUsers() { usersData=await(await fetch('/api/users')).json(); renderUsers(usersData); }
+        function renderUsers(list) { document.getElementById('tb-users').innerHTML=list.map(u=>{ const avatar=u.avatar_url||'https://cdn.discordapp.com/embed/avatars/0.png'; const status=u.is_banned?'<span class="badge bg-danger">BANIDO</span>':'<span class="badge bg-success">ATIVO</span>'; const hwid=u.hwid?`<span class="blur-data" onclick="copy('${u.hwid}')">${u.hwid}</span>`:'<span style="color:#555">Nenhum</span>'; const link=u.discord_id?`https://discord.com/users/${u.discord_id}`:'#'; return `<tr><td><a href="${link}" target="_blank" class="avatar-link"><div class="avatar-container"><img src="${avatar}" class="user-avatar"></div></a></td><td><div style="font-weight:bold; color:#fff">${u.username}</div><div style="font-size:11px; color:#666">${u.discord_id||'Sem Discord'}</div></td><td><span class="blur-data" onclick="copy('${u.license_key}')">${u.license_key}</span></td><td>${hwid}</td><td>${u.expiry_date} <button class="btn-sm btn-primary" onclick="openAddDays(${u.id})" style="margin-left:5px; padding:2px 6px">+</button></td><td>${status}</td><td style="text-align:right"><button class="btn-icon danger" onclick="openConfirmAction('Banir/Desbanir','Alterar status?',()=>act(${u.id},'${u.is_banned?'unban':'ban'}'))"><i class="fas fa-ban"></i></button><button class="btn-icon" onclick="openConfirmAction('Resetar HWID','Resetar?',()=>act(${u.id},'reset'))"><i class="fas fa-microchip"></i></button><button class="btn-icon" onclick="openConfirmAction('Deletar Usuário','Irreversível.',()=>act(${u.id},'delete'))"><i class="fas fa-trash"></i></button></td></tr>`; }).join(''); }
+        function filterUsers() { const q=document.getElementById('user-search').value.toLowerCase(); renderUsers(usersData.filter(u=>u.username.toLowerCase().includes(q)||u.license_key.includes(q.toUpperCase()))); }
+        async function generateKey() { const d=document.getElementById('gen-days').value; const r=await(await fetch('/api/users/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:d})})).json(); if(r.success){ document.getElementById('generated-key-input').value=r.key; document.getElementById('modal-key').style.display='flex'; loadUsers(); } }
+        function copyGeneratedKey() { const t=document.getElementById("generated-key-input"); t.select(); t.setSelectionRange(0,99999); if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t.value);else document.execCommand('copy'); showToast('success','Copiado!'); }
+        async function act(id,action) { await fetch('/api/users/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action})}); loadUsers(); showToast('success','Ação realizada!'); closeModal('modal-confirm'); }
+        async function loadFiles() { const f=await(await fetch('/api/downloads')).json(); document.getElementById('tb-files').innerHTML=f.map(x=>`<tr><td style="color:#fff;font-weight:bold">${x.name}</td><td>${x.url}</td><td>${x.version}</td><td style="text-align:right"><button class="btn-icon danger" onclick="openConfirmAction('Deletar','Remover download?',()=>delFile(${x.id}))"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function addFile() { const n=document.getElementById('f-name').value; const u=document.getElementById('f-url').value; if(!n||!u)return showToast('error','Preencha campos!'); await fetch('/api/downloads/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,url:u,version:document.getElementById('f-ver').value,desc:'',icon:'fas fa-file'})}); loadFiles(); showToast('success','Adicionado!'); document.getElementById('f-name').value=''; }
+        async function delFile(id) { await fetch('/api/downloads/del',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}); loadFiles(); closeModal('modal-confirm'); }
+        async function loadBotSettings() { const s=await(await fetch('/api/admin/settings')).json(); document.getElementById('bot-token').value=s.bot_token||''; document.getElementById('bot-client-id').value=s.client_id||''; document.getElementById('bot-voice-id').value=s.voice_id||''; document.getElementById('bot-owner-id').value=s.owner_id||''; }
+        async function saveBotSettings() { await fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bot_token:document.getElementById('bot-token').value,client_id:document.getElementById('bot-client-id').value,voice_id:document.getElementById('bot-voice-id').value,owner_id:document.getElementById('bot-owner-id').value})}); showToast('success','Salvo!'); }
+        async function restartBot() { openConfirmAction('Reiniciar Bot','Isso desconectará o bot.',async()=>{ await fetch('/api/admin/restart-bot',{method:'POST'}); showToast('success','Bot reiniciado!'); closeModal('modal-confirm'); }); }
+        async function loadSys() { const s=await(await fetch('/api/admin/settings')).json(); document.getElementById('sys-msg').value=s.global_msg; maint=s.maintenance==='true'; renderMaint(); }
+        function renderMaint() { const t=document.getElementById('maint-txt'); const b=document.getElementById('btn-maint'); if(maint){t.innerText="BLOQUEADO";t.style.color="red";b.innerText="Liberar";b.className="btn-primary";}else{t.innerText="NORMAL";t.style.color="green";b.innerText="Bloquear";b.className="btn-danger-solid";} }
+        async function toggleMaint() { openConfirmAction(maint?"Liberar?":"Bloquear?",maint?"Restaurar acesso.":"Interromper acesso.",async()=>{maint=!maint;await fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({maintenance:maint.toString()})});renderMaint();showToast('success','Alterado!');closeModal('modal-confirm');}); }
+        async function saveSettings() { await fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({global_msg:document.getElementById('sys-msg').value})}); showToast('success','Salvo!'); }
+        function openConfirmAction(t,d,cb) { document.getElementById('confirm-title').innerText=t; document.getElementById('confirm-desc').innerText=d; const b=document.getElementById('confirm-btn-action'); const n=b.cloneNode(true); b.parentNode.replaceChild(n,b); n.onclick=cb; n.className=(t.includes('Deletar')||t.includes('Banir')||t.includes('Bloquear'))?'btn-danger-solid':'btn-primary'; document.getElementById('modal-confirm').style.display='flex'; }
+        function openAddDays(id) { currentUserId=id; document.getElementById('modal-days').style.display='flex'; }
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        async function confirmAddDays() { const d=document.getElementById('modal-days-input').value; const r=await(await fetch('/api/users/add-days',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentUserId,days:d})})).json(); if(r.success){ showToast('success',`Adicionado ${d} dias!`); closeModal('modal-days'); loadUsers(); }else{ showToast('error','Erro'); } }
+        function copy(t) { if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>showToast('success','Copiado!')).catch(()=>fallbackCopy(t)); else fallbackCopy(t); }
+        function fallbackCopy(t) { const a=document.createElement("textarea"); a.value=t; a.style.position="fixed"; a.style.left="-9999px"; document.body.appendChild(a); a.focus(); a.select(); try{document.execCommand('copy');showToast('success','Copiado!');}catch(e){showToast('error','Erro');} document.body.removeChild(a); }
+        function showToast(type,msg) { const c=document.getElementById('notification-area'); const e=document.createElement('div'); e.className=`toast ${type}`; e.innerHTML=`<i class="fas ${type==='success'?'fa-check-circle':'fa-times-circle'}"></i> ${msg}`; c.appendChild(e); setTimeout(()=>{e.style.animation='fadeOut 0.4s forwards';setTimeout(()=>e.remove(),400)},3000); }
+        loadDash();
+    </script>
+</body>
+</html>

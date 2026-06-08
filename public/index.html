@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haze Sharp | Acesso Seguro</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        
+        :root { 
+            --primary: #1E40AF; 
+            --primary-dark: #1E3A8A;
+            --primary-glow: rgba(30, 64, 175, 0.3);
+            --bg: #0A0A0F; 
+            --card-bg: rgba(15, 15, 25, 0.8); 
+            --border: rgba(255, 255, 255, 0.06);
+            --text: #F0F0F0; 
+            --text-muted: #A0A0A0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --danger: #ef4444; 
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .notification {
+            background: rgba(25, 25, 25, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-left: 4px solid var(--primary);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            transform: translateX(400px) scale(0.95);
+            opacity: 0;
+            transition: all 0.4s var(--ease);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .notification.show {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+        
+        .notification.hide {
+            transform: translateX(400px) scale(0.95);
+            opacity: 0;
+        }
+        
+        .notification.success {
+            border-left-color: var(--success);
+            background: rgba(25, 25, 25, 0.98);
+        }
+        
+        .notification.warning {
+            border-left-color: var(--warning);
+            background: rgba(25, 25, 25, 0.98);
+        }
+        
+        .notification.info {
+            border-left-color: var(--info);
+            background: rgba(25, 25, 25, 0.98);
+        }
+        
+        .notification.danger {
+            border-left-color: var(--danger);
+            background: rgba(25, 25, 25, 0.98);
+        }
+        
+        .notification-icon {
+            font-size: 18px;
+            margin-top: 3px;
+            flex-shrink: 0;
+            width: 22px;
+            text-align: center;
+        }
+        
+        .notification.success .notification-icon {
+            color: var(--success);
+        }
+        
+        .notification.warning .notification-icon {
+            color: var(--warning);
+        }
+        
+        .notification.info .notification-icon {
+            color: var(--info);
+        }
+        
+        .notification.danger .notification-icon {
+            color: var(--danger);
+        }
+        
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: var(--text);
+            letter-spacing: 0.2px;
+            line-height: 1.3;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .notification-message {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.1px;
+        }
+        
+        .notification-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            border-radius: 4px;
+            margin-top: -2px;
+            height: 24px;
+            width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-close:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cyber-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridMove 25s linear infinite;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); }
+        }
+
+        .ambient-light {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(30, 64, 175, 0.04) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+            animation: pulse 15s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .login-card { 
+            background: var(--card-bg); 
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 45px 40px; 
+            border-radius: 24px; 
+            width: 100%;
+            max-width: 400px; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.4); 
+            text-align: center; 
+            position: relative;
+            overflow: hidden;
+            animation: cardEnter 0.8s var(--ease);
+        }
+
+        .login-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(30, 64, 175, 0.3), transparent);
+        }
+        
+        .login-card::after {
+            content: ''; position: absolute; bottom: 0; right: 0; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(30, 64, 175, 0.06) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .brand-text { 
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 35px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(30, 64, 175, 0.3);
+            transition: all 0.4s var(--ease);
+        }
+        .brand-text span {
+            color: var(--primary);
+        }
+        .brand-text:hover { 
+            transform: scale(1.05);
+        }
+
+        .tabs-container {
+            background: rgba(15, 15, 15, 0.5);
+            padding: 4px;
+            border-radius: 12px;
+            display: flex;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .tab { 
+            flex: 1; 
+            padding: 12px; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            font-size: 13px;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.5px;
+            transition: all 0.3s var(--ease); 
+            color: var(--text-muted); 
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        
+        .tab.active { 
+            background: rgba(30, 64, 175, 0.15); 
+            color: var(--text); 
+            border: 1px solid rgba(30, 64, 175, 0.3);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        .tab:hover:not(.active) { color: #fff; background: rgba(255,255,255,0.05); }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 16px 16px 16px 45px; 
+            background: rgba(10, 10, 10, 0.5); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            color: white; 
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s var(--ease);
+        }
+        
+        input:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1); 
+            background: rgba(10, 10, 10, 0.8);
+        }
+        
+        input:focus + i { color: var(--text); }
+        input::placeholder { color: #5A5A5A; }
+        
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%); 
+            border: none; 
+            border-radius: 12px; 
+            color: #F0F0F0; 
+            font-weight: 700; 
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: all 0.3s var(--ease); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::after {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: 0.6s var(--ease);
+        }
+
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3); 
+            background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%); 
+        }
+        
+        button:hover::after { left: 100%; }
+        button:active { transform: translateY(0); }
+        
+        #msg { 
+            margin-top: 25px; 
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(244, 67, 54, 0.08);
+            color: var(--danger); 
+            border: 1px solid rgba(244, 67, 54, 0.15);
+            display: none; 
+            font-size: 13px; 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            animation: fadeIn 0.3s var(--ease);
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .footer-text {
+            margin-top: 30px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.15);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        @media (max-width: 480px) {
+            .login-card { max-width: 90%; padding: 30px 20px; }
+            .notifications-container { 
+                width: calc(100% - 40px); 
+                right: 20px;
+                left: 20px;
+                top: 10px;
+            }
+            .notification {
+                padding: 14px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="notifications-container" id="notifications-container"></div>
+    
+    <div class="cyber-grid"></div>
+    <div class="ambient-light"></div>
+    
+    <div class="login-card">
+        <div class="brand-text">Haze Sharp</div>
+        
+        <div class="tabs-container">
+            <div class="tab active" onclick="sw('client')">
+                <i class="fas fa-gamepad"></i> CLIENTE
+            </div>
+            <div class="tab" onclick="sw('admin')">
+                <i class="fas fa-shield-halved"></i> ADMIN
+            </div>
+        </div>
+
+        <div id="client-form">
+            <div class="input-group">
+                <input type="text" id="key" placeholder="Sua Licença (HK-XXXX)" autocomplete="off">
+                <i class="fas fa-key"></i>
+            </div>
+            <button onclick="auth('client')">
+                Acessar Sistema <i class="fas fa-arrow-right" style="margin-left:5px"></i>
+            </button>
+        </div>
+
+        <div id="admin-form" style="display:none">
+            <div class="input-group">
+                <input type="text" id="user" placeholder="Nome de Usuário" autocomplete="off">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="input-group">
+                <input type="password" id="pass" placeholder="Senha de Acesso">
+                <i class="fas fa-lock"></i>
+            </div>
+            <button onclick="auth('admin')">
+                Painel Administrativo <i class="fas fa-arrow-right" style="margin-left:5px"></i>
+            </button>
+        </div>
+
+        <div id="msg" style="display:none;"></div>
+        
+        <div class="footer-text">Haze Sharp Security System v2.0</div>
+    </div>
+
+    <script>
+        const notificationSystem = {
+            container: document.getElementById('notifications-container'),
+            notificationCount: 0,
+            
+            showNotification(type, title, message, duration = 4000) {
+                this.notificationCount++;
+                const id = 'notification-' + this.notificationCount;
+                
+                const notification = document.createElement('div');
+                notification.id = id;
+                notification.className = 'notification ' + type;
+                
+                const icon = type === 'success' ? 'fa-check-circle' :
+                            type === 'warning' ? 'fa-exclamation-triangle' :
+                            type === 'info' ? 'fa-info-circle' : 'fa-times-circle';
+                
+                notification.innerHTML = `
+                    <i class="fas ${icon} notification-icon"></i>
+                    <div class="notification-content">
+                        <div class="notification-title">${title}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                    <button class="notification-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                this.container.appendChild(notification);
+                
+                const closeBtn = notification.querySelector('.notification-close');
+                closeBtn.addEventListener('click', () => this.closeNotification(id));
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+                
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.closeNotification(id);
+                    }, duration);
+                }
+                
+                return id;
+            },
+            
+            closeNotification(id) {
+                const notification = document.getElementById(id);
+                if (notification) {
+                    notification.classList.remove('show');
+                    notification.classList.add('hide');
+                    
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 400);
+                }
+            },
+            
+            success(title, message, duration = 4000) {
+                return this.showNotification('success', title, message, duration);
+            },
+            
+            warning(title, message, duration = 4000) {
+                return this.showNotification('warning', title, message, duration);
+            },
+            
+            info(title, message, duration = 4000) {
+                return this.showNotification('info', title, message, duration);
+            },
+            
+            error(title, message, duration = 4000) {
+                return this.showNotification('danger', title, message, duration);
+            }
+        };
+        
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                notificationSystem.info('Haze Sharp', 'Bem-vindo ao portal de acesso seguro', 4000);
+            }, 1000);
+        });
+        
+        function sw(t) { 
+            const clientForm = document.getElementById('client-form');
+            const adminForm = document.getElementById('admin-form');
+            const msgDiv = document.getElementById('msg');
+            
+            clientForm.style.opacity = 0;
+            adminForm.style.opacity = 0;
+            
+            setTimeout(() => {
+                clientForm.style.display = t === 'client' ? 'block' : 'none'; 
+                adminForm.style.display = t === 'admin' ? 'block' : 'none'; 
+                
+                void clientForm.offsetWidth;
+                
+                clientForm.style.transition = 'opacity 0.3s';
+                adminForm.style.transition = 'opacity 0.3s';
+                clientForm.style.opacity = 1;
+                adminForm.style.opacity = 1;
+            }, 200);
+
+            document.querySelectorAll('.tab').forEach(e => e.classList.remove('active')); 
+            event.currentTarget.classList.add('active'); 
+            msgDiv.style.display = 'none';
+        }
+
+        async function auth(type) {
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Autenticando...';
+            btn.disabled = true;
+            btn.style.opacity = "0.8";
+
+            const msgDiv = document.getElementById('msg');
+            msgDiv.style.display = 'none';
+
+            try {
+                const body = type === 'admin' 
+                    ? { username: document.getElementById('user').value, password: document.getElementById('pass').value } 
+                    : { key: document.getElementById('key').value };
+
+                const res = await fetch(`/auth/${type}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const d = await res.json();
+                
+                if(d.success) {
+                    notificationSystem.success('Autenticação Bem-sucedida', 'Redirecionando...', 2000);
+                    
+                    btn.innerHTML = '<i class="fas fa-check"></i> Sucesso!';
+                    btn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                    
+                    setTimeout(() => {
+                        location.href = d.redirect;
+                    }, 500);
+                    
+                } else { 
+                    notificationSystem.error('Falha na Autenticação', d.msg || d.error || "Acesso Negado.", 4000);
+                    
+                    msgDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${d.msg || d.error || "Acesso Negado."}`; 
+                    msgDiv.style.display = 'flex'; 
+                    
+                    resetBtn();
+                }
+            } catch (e) {
+                notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.', 4000);
+                
+                msgDiv.innerHTML = `<i class="fas fa-wifi"></i> Erro de conexão.`;
+                msgDiv.style.display = 'flex';
+                resetBtn();
+            }
+
+            function resetBtn() {
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.background = "";
+                }, 1000);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const activeTab = document.querySelector('.tab.active');
+                        if (activeTab.textContent.includes('CLIENTE')) {
+                            auth('client');
+                        } else {
+                            auth('admin');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
