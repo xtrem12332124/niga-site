@@ -432,6 +432,13 @@ app.post('/auth/client/login', async (req, res) => {
         req.session.isClient = true;
         req.session.userId = user.id;
         req.session.userKey = user.license_key;
+
+        await dbRun(
+            "UPDATE users SET last_login = CURRENT_TIMESTAMP, ip_address = ? WHERE id = ?",
+            [req.ip, user.id]
+        );
+        logAction('WEB_LOGIN', `Login web: ${user.license_key}`, req.ip);
+
         return res.json({ success: true, redirect: '/client' });
     }
     
