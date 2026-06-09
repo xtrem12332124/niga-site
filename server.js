@@ -562,6 +562,11 @@ app.post('/api/loader/auth', async (req, res) => {
             logAction('HWID_FAIL', `Key ${key} - HWID mismatch`, req.ip);
             const response = encrypt(JSON.stringify({ success: false, msg: "HWID inválido" }));
             return res.send(response);
+        } else {
+            await dbRun(
+                "UPDATE users SET last_login = CURRENT_TIMESTAMP, ip_address = ? WHERE id = ?",
+                [req.ip, user.id]
+            );
         }
 
         logAction('LOADER_LOGIN', `Login C++: ${user.username}`, req.ip);
