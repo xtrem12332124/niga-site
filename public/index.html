@@ -3,251 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KALI MODS | Acesso Seguro</title>
+    <title>KALI MODS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        :root {
-            --bg: oklch(0.045 0 0);
-            --bg-card: oklch(0.085 0 0 / 0.85);
-            --border: oklch(0.18 0 0);
-            --text: oklch(0.95 0 0);
-            --text-muted: oklch(0.45 0 0);
-            --accent: #6366f1;
-            --accent-dim: oklch(0.35 0.18 270 / 0.12);
-            --success: oklch(0.65 0.18 145);
-            --danger: oklch(0.55 0.2 25);
-            --radius: 12px;
-            --ease: cubic-bezier(0.23, 1, 0.32, 1);
-        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; position: relative;
+            background: #050508;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
-        .noise::before {
-            content: ''; position: fixed; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            opacity: 0.025; pointer-events: none; z-index: 0;
+
+        .bg-glow {
+            position: fixed;
+            width: 90vmax;
+            height: 90vmax;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 40%, rgba(99,102,241,0.06) 0%, transparent 60%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
         }
+
         .orb {
-            position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0;
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 12s ease-in-out infinite alternate;
         }
-        .orb-1 { width: 600px; height: 600px; background: oklch(0.4 0.18 270 / 0.04); top: -20%; left: -20%; }
-        .orb-2 { width: 500px; height: 500px; background: oklch(0.4 0.18 270 / 0.03); bottom: -25%; right: -20%; }
+        .orb-1 {
+            width: 400px; height: 400px;
+            background: rgba(99,102,241,0.03);
+            top: -10%; left: -10%;
+            animation-delay: 0s;
+        }
+        .orb-2 {
+            width: 350px; height: 350px;
+            background: rgba(99,102,241,0.02);
+            bottom: -15%; right: -10%;
+            animation-delay: -4s;
+        }
+        .orb-3 {
+            width: 300px; height: 300px;
+            background: rgba(168,85,247,0.02);
+            bottom: 30%; right: 20%;
+            animation-delay: -8s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+            100% { transform: translate(10px, -30px) scale(1.02); }
+        }
+
+        .noise-fixed {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            opacity: 0.02;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .login-wrap {
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column; align-items: center;
+            animation: fadeIn 1s ease both;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .brand {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .brand-line {
+            width: 24px; height: 1px;
+            background: rgba(255,255,255,0.15);
+            margin: 0 auto 20px;
+        }
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .brand h1 span { font-weight: 600; }
+        .brand p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 12px;
+            font-weight: 400;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 20px;
+            padding: 36px 32px 32px;
+            width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 28px;
+            justify-content: center;
+        }
+        .tab {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding-bottom: 6px;
+            border-bottom: 1px solid transparent;
+            user-select: none;
+        }
+        .tab:hover { color: rgba(255,255,255,0.5); }
+        .tab.active { color: #fff; border-bottom-color: #6366f1; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 0 8px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 300;
+            transition: 0.3s;
+            outline: none;
+        }
+        .form-group input:focus { border-bottom-color: rgba(255,255,255,0.2); }
+        .form-group input::placeholder { color: rgba(255,255,255,0.08); font-weight: 300; }
+        .form-group input:-webkit-autofill,
+        .form-group input:-webkit-autofill:hover,
+        .form-group input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #fff;
+            -webkit-box-shadow: 0 0 0 30px #050508 inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #fff;
+            color: #050508;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 8px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .submit-btn:hover { background: #e8e8e8; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .submit-btn:active { transform: scale(0.98); }
+        .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        .submit-btn .spinner {
+            display: none;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-top-color: #050508;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #msg {
+            margin-top: 14px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            text-align: center;
+            display: none;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        #msg.error { display: block; background: rgba(239,68,68,0.06); color: #ef4444; }
+
+        .footer {
+            position: fixed;
+            bottom: 24px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: rgba(255,255,255,0.05);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            z-index: 1;
+        }
+
         .notifications-container {
-            position: fixed; top: 20px; right: 20px; width: 340px; z-index: 9999;
+            position: fixed; top: 20px; right: 20px; width: 320px; z-index: 9999;
             display: flex; flex-direction: column; gap: 8px;
         }
         .notification {
-            background: oklch(0.07 0 0 / 0.96); backdrop-filter: blur(20px);
-            border-radius: 10px; padding: 12px 14px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px; padding: 12px 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
             transform: translateX(400px); opacity: 0;
-            transition: all 0.4s var(--ease);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             display: flex; align-items: flex-start; gap: 10px;
-            border-left: 2px solid transparent;
-            font-family: 'Inter', sans-serif;
         }
         .notification.show { transform: translateX(0); opacity: 1; }
         .notification.hide { transform: translateX(400px); opacity: 0; }
-        .notification.success { border-left-color: var(--success); }
-        .notification.danger { border-left-color: var(--danger); }
-        .notification.info { border-left-color: var(--accent); }
         .notification-icon { font-size: 15px; margin-top: 2px; flex-shrink: 0; }
-        .notification.success .notification-icon { color: var(--success); }
-        .notification.danger .notification-icon { color: var(--danger); }
-        .notification.info .notification-icon { color: var(--accent); }
+        .notification.success .notification-icon { color: #22c55e; }
+        .notification.danger .notification-icon { color: #ef4444; }
+        .notification.info .notification-icon { color: #6366f1; }
         .notification-content { flex: 1; min-width: 0; }
         .notification-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; color: #fff; }
-        .notification-message { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        .notification-message { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.4; }
         .notification-close {
-            background: transparent; border: none; color: var(--text-muted);
+            background: transparent; border: none; color: rgba(255,255,255,0.2);
             cursor: pointer; font-size: 10px; padding: 4px; border-radius: 6px;
             flex-shrink: 0; width: 22px; height: 22px;
             display: flex; align-items: center; justify-content: center;
             transition: 0.2s;
         }
         .notification-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
-        .login-card {
-            position: relative; z-index: 1;
-            background: var(--bg-card); backdrop-filter: blur(30px);
-            padding: 40px 36px; border-radius: 16px;
-            width: 100%; max-width: 380px;
-            border: 1px solid var(--border);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-            text-align: center;
-            animation: cardIn 0.6s var(--ease);
-        }
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(20px) scale(0.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .brand-icon {
-            width: 48px; height: 48px; margin: 0 auto 16px;
-            background: var(--accent-dim); border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; color: var(--accent);
-        }
-        .brand-text {
-            font-size: 22px; font-weight: 700; color: #fff;
-            margin-bottom: 4px; letter-spacing: -0.3px;
-        }
-        .brand-sub {
-            font-size: 12px; color: var(--text-muted); margin-bottom: 28px;
-        }
-        .tabs-wrap {
-            background: oklch(0 0 0 / 0.3); padding: 2px;
-            border-radius: 8px; display: flex; margin-bottom: 24px;
-        }
-        .tab {
-            flex: 1; padding: 8px; cursor: pointer; border-radius: 7px;
-            font-weight: 500; font-size: 12px; transition: 0.25s;
-            color: var(--text-muted); letter-spacing: 0.3px;
-        }
-        .tab.active { background: var(--accent-dim); color: var(--accent); }
-        .tab:hover:not(.active) { color: #fff; background: oklch(1 0 0 / 0.03); }
-        .input-group { margin-bottom: 14px; text-align: left; }
-        .input-group label {
-            display: block; font-size: 11px; font-weight: 500;
-            color: var(--text-muted); margin-bottom: 5px;
-            text-transform: uppercase; letter-spacing: 0.4px;
-        }
-        .input-wrap { position: relative; }
-        .input-wrap svg {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%); color: var(--text-muted);
-            transition: 0.3s; pointer-events: none;
-        }
-        input {
-            width: 100%; padding: 12px 12px 12px 38px;
-            background: oklch(0 0 0 / 0.35); border: none;
-            border-radius: 8px; color: #fff;
-            font-family: 'Inter', sans-serif; font-size: 13px;
-            transition: 0.25s;
-        }
-        input:focus { background: oklch(0 0 0 / 0.6); box-shadow: 0 0 0 1px var(--accent-dim); }
-        input::placeholder { color: oklch(0.3 0 0); }
-        .input-wrap:focus-within svg { color: var(--accent); }
-        button {
-            width: 100%; padding: 12px; background: #fff; border: none;
-            border-radius: 8px; color: #0a0a0c; font-weight: 600;
-            font-family: 'Inter', sans-serif; cursor: pointer;
-            margin-top: 6px; transition: 0.25s; font-size: 13px; letter-spacing: 0.2px;
-            position: relative; overflow: hidden;
-        }
-        button:hover { background: #e8e8e8; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-spinner {
-            display: none; width: 16px; height: 16px;
-            border: 2px solid oklch(0 0 0 / 0.1); border-top-color: #0a0a0c;
-            border-radius: 50%; animation: spin 0.7s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        #msg {
-            margin-top: 16px; padding: 10px 12px; border-radius: 8px;
-            display: none; font-size: 12px;
-            align-items: center; justify-content: center; gap: 6px;
-        }
-        #msg.error {
-            background: oklch(0.55 0.2 25 / 0.08); color: var(--danger); display: flex;
-        }
-        .footer-text {
-            margin-top: 24px; font-size: 9px; color: oklch(1 0 0 / 0.1);
-            text-transform: uppercase; letter-spacing: 1.5px;
-        }
-        @media (max-width: 480px) {
-            .login-card { max-width: 92%; padding: 28px 20px; }
+
+        @media (max-width: 420px) {
+            .card { width: calc(100% - 32px); padding: 28px 20px; }
+            .brand h1 { font-size: 22px; letter-spacing: 6px; }
             .notifications-container { width: calc(100% - 24px); right: 12px; top: 10px; }
         }
     </style>
 </head>
-<body class="noise">
+<body>
+
+    <div class="bg-glow"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="noise-fixed"></div>
 
     <div class="notifications-container" id="notifications-container"></div>
 
-    <div class="login-card">
-        <div class="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-        </div>
-        <div class="brand-text">KALI MODS</div>
-        <div class="brand-sub">Sistema de Autenticação</div>
-
-        <div class="tabs-wrap">
-            <div class="tab active" onclick="sw('client')">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M14 12h4"/></svg>
-                CLIENTE
-            </div>
-            <div class="tab" onclick="sw('admin')">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                ADMIN
-            </div>
+    <div class="login-wrap">
+        <div class="brand">
+            <div class="brand-line"></div>
+            <h1><span>KALI</span> MODS</h1>
+            <p>Sistema de Autenticação</p>
         </div>
 
-        <div id="client-form">
-            <div class="input-group">
-                <label>Licença</label>
-                <div class="input-wrap">
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" onclick="sw('client')">Cliente</div>
+                <div class="tab" onclick="sw('admin')">Admin</div>
+            </div>
+
+            <div id="client-form">
+                <div class="form-group">
+                    <label>Licença</label>
                     <input type="text" id="key" placeholder="HK-XXXX" autocomplete="off">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                 </div>
+                <button class="submit-btn" onclick="authDiscord()" id="client-btn">
+                    <span>Continuar</span>
+                    <div class="spinner"></div>
+                </button>
             </div>
-            <button onclick="authDiscord()">
-                <span id="client-btn-text">Acessar Sistema</span>
-                <svg id="client-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                <div id="client-btn-spinner" class="btn-spinner"></div>
-            </button>
-        </div>
 
-        <div id="admin-form" style="display:none">
-            <div class="input-group">
-                <label>Usuário</label>
-                <div class="input-wrap">
+            <div id="admin-form" style="display:none">
+                <div class="form-group">
+                    <label>Usuário</label>
                     <input type="text" id="user" placeholder="Nome de usuário" autocomplete="off">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
-            </div>
-            <div class="input-group">
-                <label>Senha</label>
-                <div class="input-wrap">
+                <div class="form-group">
+                    <label>Senha</label>
                     <input type="password" id="pass" placeholder="••••••••">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
-            </div>
-            <div class="input-group" id="phone-group" style="display:none;">
-                <label>Telefone (Verificação)</label>
-                <div class="input-wrap">
+                <div class="form-group" id="phone-group" style="display:none">
+                    <label>Telefone</label>
                     <input type="tel" id="phone" placeholder="DDD + Número">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 </div>
+                <button class="submit-btn" onclick="auth('admin')" id="admin-btn">
+                    <span>Acessar</span>
+                    <div class="spinner"></div>
+                </button>
             </div>
-            <button onclick="auth('admin')">
-                <span id="admin-btn-text">Painel Administrativo</span>
-                <svg id="admin-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                <div id="admin-btn-spinner" class="btn-spinner"></div>
-            </button>
-        </div>
 
-        <div id="msg"></div>
-        <div class="footer-text">KALI MODS Security System v2.0</div>
+            <div id="msg"></div>
+        </div>
     </div>
+
+    <div class="footer">KALI MODS  v2.0</div>
 
     <script>
         const notificationSystem = {
             container: document.getElementById('notifications-container'),
             n: 0,
             icons: {
-                success: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-                danger: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-                info: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+                success: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+                danger: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                info: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
             },
             show(type, title, message, duration = 4000) {
                 this.n++;
@@ -302,25 +389,22 @@
             document.getElementById('admin-form').style.display = t === 'admin' ? 'block' : 'none';
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            document.getElementById('msg').className = 'msg';
+            document.getElementById('msg').className = '';
             document.getElementById('msg').style.display = 'none';
         }
 
         let adminStep = 'credentials';
 
-        function setButtonLoading(btnId, loading) {
+        function setLoading(btnId, loading) {
             const btn = document.getElementById(btnId);
-            const text = btn.querySelector('span');
-            const arrow = btn.querySelector('svg:last-child');
-            const spinner = btn.querySelector('.btn-spinner');
+            const span = btn.querySelector('span');
+            const spinner = btn.querySelector('.spinner');
             if (loading) {
-                text.style.display = 'none';
-                if (arrow) arrow.style.display = 'none';
+                span.style.display = 'none';
                 spinner.style.display = 'block';
                 btn.disabled = true;
             } else {
-                text.style.display = '';
-                if (arrow) arrow.style.display = '';
+                span.style.display = '';
                 spinner.style.display = 'none';
                 btn.disabled = false;
             }
@@ -332,9 +416,7 @@
                 notificationSystem.error('Key necessária', 'Digite sua licença para continuar');
                 return;
             }
-
-            setButtonLoading('client-btn-text', true);
-
+            setLoading('client-btn', true);
             try {
                 const res = await fetch('/auth/discord/login', {
                     method: 'POST',
@@ -342,22 +424,21 @@
                     body: JSON.stringify({ key })
                 });
                 const d = await res.json();
-
                 if (d.success && d.redirect) {
                     location.href = d.redirect;
                 } else {
                     notificationSystem.error('Falha na Autenticação', d.error || 'Erro ao autenticar');
-                    setButtonLoading('client-btn-text', false);
+                    setLoading('client-btn', false);
                 }
             } catch (e) {
                 notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
-                setButtonLoading('client-btn-text', false);
+                setLoading('client-btn', false);
             }
         }
 
         function resetBtn(btn) {
             setTimeout(() => {
-                btn.innerHTML = '<span>Painel Administrativo</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg><div class="btn-spinner"></div>';
+                btn.innerHTML = '<span>Acessar</span><div class="spinner"></div>';
                 btn.disabled = false;
                 btn.style.background = '';
                 btn.style.color = '';
@@ -366,21 +447,19 @@
 
         async function auth(type) {
             const btn = event.target.closest('button');
-            const text = btn.querySelector('span');
-            const arrow = btn.querySelector('svg:last-child');
-            const spinner = btn.querySelector('.btn-spinner');
+            const span = btn.querySelector('span');
+            const spinner = btn.querySelector('.spinner');
 
             if (type === 'admin' && adminStep === 'phone') {
                 const phone = document.getElementById('phone').value.trim();
                 if (!phone) {
-                    document.getElementById('msg').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Informe o telefone de verificação';
+                    document.getElementById('msg').innerHTML = 'Informe o telefone de verificação';
                     document.getElementById('msg').className = 'error';
                     return;
                 }
             }
 
-            text.style.display = 'none';
-            if (arrow) arrow.style.display = 'none';
+            span.style.display = 'none';
             spinner.style.display = 'block';
             btn.disabled = true;
 
@@ -415,20 +494,20 @@
 
                 if (d.success) {
                     notificationSystem.success('Autenticação Bem-sucedida', 'Redirecionando...', 2000);
-                    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Sucesso!';
+                    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#050508" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
                     btn.style.background = '#22c55e';
-                    btn.style.color = '#fff';
+                    btn.style.color = '#050508';
                     setTimeout(() => { location.href = d.redirect; }, 500);
                 } else {
                     const err = d.msg || d.error || 'Acesso Negado.';
                     notificationSystem.error('Falha na Autenticação', err, 4000);
-                    msg.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + err;
+                    msg.innerHTML = err;
                     msg.className = 'error';
                     resetBtn(btn);
                 }
             } catch (e) {
                 notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
-                msg.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg> Erro de conexão.';
+                msg.innerHTML = 'Erro de conexão.';
                 msg.className = 'error';
                 resetBtn(btn);
             }
@@ -439,7 +518,7 @@
                 input.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
                         const active = document.querySelector('.tab.active');
-                        auth(active.textContent.includes('CLIENTE') ? 'client' : 'admin');
+                        auth(active.textContent.trim().toLowerCase() === 'cliente' ? 'client' : 'admin');
                     }
                 });
             });
