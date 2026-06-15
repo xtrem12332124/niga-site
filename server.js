@@ -749,7 +749,7 @@ app.post('/api/users/action', requireAdmin, async (req, res) => {
     }
 });
 
-app.get('/api/admin/settings', requireAdmin, async (req, res) => {
+app.get('/api/admin/settings', requireOwner, async (req, res) => {
     const rows = await dbAll("SELECT * FROM settings");
     const settings = {};
     
@@ -760,7 +760,7 @@ app.get('/api/admin/settings', requireAdmin, async (req, res) => {
     res.json(settings);
 });
 
-app.post('/api/admin/settings', requireAdmin, async (req, res) => {
+app.post('/api/admin/settings', requireOwner, async (req, res) => {
     const updates = req.body;
     
     for (const [key, value] of Object.entries(updates)) {
@@ -775,7 +775,7 @@ app.post('/api/admin/settings', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/restart-bot', requireAdmin, async (req, res) => {
+app.post('/api/admin/restart-bot', requireOwner, async (req, res) => {
     startBot();
     res.json({ success: true, msg: 'Bot reiniciado' });
 });
@@ -785,7 +785,7 @@ app.get('/api/downloads', requireClient, async (req, res) => {
     res.json(downloads);
 });
 
-app.post('/api/downloads/add', requireAdmin, async (req, res) => {
+app.post('/api/downloads/add', requireOwner, async (req, res) => {
     const { name, url, version } = req.body;
     
     await dbRun(
@@ -796,7 +796,7 @@ app.post('/api/downloads/add', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/downloads/del', requireAdmin, async (req, res) => {
+app.post('/api/downloads/del', requireOwner, async (req, res) => {
     const { id } = req.body;
     
     await dbRun("DELETE FROM downloads WHERE id = ?", [id]);
@@ -809,7 +809,7 @@ app.get('/api/admin/logs', requireAdmin, async (req, res) => {
     res.json(logs);
 });
 
-app.post('/api/admin/clear-logs', requireAdmin, async (req, res) => {
+app.post('/api/admin/clear-logs', requireOwner, async (req, res) => {
     await dbRun("DELETE FROM logs");
     res.json({ success: true });
 });
@@ -838,7 +838,7 @@ app.get('/api/admin/admins', requireOwner, async (req, res) => {
     res.json(admins);
 });
 
-app.post('/api/admin/send-message', requireAdmin, async (req, res) => {
+app.post('/api/admin/send-message', requireOwner, async (req, res) => {
     const { message } = req.body;
     
     await dbRun(
@@ -849,7 +849,7 @@ app.post('/api/admin/send-message', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/toggle-maintenance', requireAdmin, async (req, res) => {
+app.post('/api/admin/toggle-maintenance', requireOwner, async (req, res) => {
     const { enabled } = req.body;
     
     await dbRun(
@@ -860,7 +860,7 @@ app.post('/api/admin/toggle-maintenance', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/ban-ip', requireAdmin, async (req, res) => {
+app.post('/api/admin/ban-ip', requireOwner, async (req, res) => {
     const { ip } = req.body;
     
     logAction('IP_BAN', `IP banido: ${ip}`, req.ip);
