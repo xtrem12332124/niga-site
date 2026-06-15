@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-
         :root {
             --bg: #050508;
             --card: rgba(255,255,255,0.02);
@@ -17,213 +16,127 @@
             --text: #f0f0f0;
             --muted: rgba(255,255,255,0.25);
             --accent: #6366f1;
-            --accent-dim: rgba(99,102,241,0.08);
             --success: #22c55e;
             --danger: #ef4444;
-            --warning: #f59e0b;
             --font: 'Inter', sans-serif;
             --mono: 'JetBrains Mono', monospace;
-            --sidebar-w: 56px;
-            --sidebar-expanded: 200px;
+            --bar-h: 52px;
         }
-
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
 
-        body {
-            font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-        .sidebar {
-            width: var(--sidebar-w);
-            height: 100%;
-            background: rgba(5,5,8,0.8);
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: var(--bar-h);
+            display: flex; align-items: center;
+            padding: 0 20px;
+            background: rgba(5,5,8,0.6);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px 0;
-            transition: width 0.25s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden;
-            z-index: 10;
-            flex-shrink: 0;
-            position: relative;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
         }
-        .sidebar:hover { width: var(--sidebar-expanded); }
-
-        .sidebar-brand {
-            width: 100%;
-            padding: 8px 16px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .sidebar-brand svg { flex-shrink: 0; color: var(--accent); }
-        .sidebar-brand span {
+        .topbar-brand {
+            display: flex; align-items: center; gap: 8px;
             font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 1px;
-            opacity: 0; transition: opacity 0.2s 0.05s;
-        }
-        .sidebar:hover .sidebar-brand span { opacity: 1; }
-
-        .sidebar-profile {
-            width: 100%;
-            padding: 8px 14px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
             flex-shrink: 0;
         }
-        .sidebar-profile .avatar {
-            width: 28px; height: 28px; border-radius: 8px;
-            background: var(--accent-dim);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .sidebar-profile .avatar svg { color: var(--accent); }
-        .sidebar-profile .info {
-            opacity: 0; transition: opacity 0.2s 0.05s;
-        }
-        .sidebar:hover .sidebar-profile .info { opacity: 1; }
-        .sidebar-profile .name { font-size: 12px; font-weight: 600; color: #fff; }
-        .sidebar-profile .role { font-size: 10px; color: var(--muted); }
+        .topbar-brand span { font-weight: 300; color: rgba(255,255,255,0.3); }
 
-        .nav-items {
-            width: 100%;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 0 8px;
-            gap: 1px;
-            overflow-y: auto;
+        .topbar-nav {
+            display: flex; align-items: center; gap: 2px;
+            flex: 1; overflow-x: auto; padding: 0 8px;
+            -ms-overflow-style: none; scrollbar-width: none;
         }
-        .nav-item {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
+        .topbar-nav::-webkit-scrollbar { display: none; }
+        .topbar-nav a {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
             color: rgba(255,255,255,0.2);
-            transition: 0.2s;
-            white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
-            flex-shrink: 0;
-        }
-        .nav-item:hover { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.02); }
-        .nav-item.active { color: #fff; background: var(--accent-dim); }
-        .nav-item svg { flex-shrink: 0; width: 16px; height: 16px; }
-        .nav-item .label { opacity: 0; transition: opacity 0.2s 0.05s; }
-        .sidebar:hover .nav-item .label { opacity: 1; }
-
-        .nav-logout {
-            margin-top: auto;
-            width: calc(100% - 16px);
-            margin: auto 8px 0;
-            padding: 10px 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            text-decoration: none;
+            letter-spacing: 0.3px;
             cursor: pointer;
-            color: rgba(239,68,68,0.3);
             transition: 0.2s;
             white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
+        }
+        .topbar-nav a:hover { color: rgba(255,255,255,0.5); }
+        .topbar-nav a.active { color: #fff; background: rgba(255,255,255,0.04); }
+
+        .topbar-right {
+            display: flex; align-items: center; gap: 10px;
             flex-shrink: 0;
         }
-        .nav-logout:hover { color: var(--danger); background: rgba(239,68,68,0.04); }
-        .nav-logout svg { flex-shrink: 0; width: 16px; height: 16px; }
-        .nav-logout .label { opacity: 0; transition: opacity 0.2s 0.05s; }
-        .sidebar:hover .nav-logout .label { opacity: 1; }
+        .topbar-user {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 8px 4px 4px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.02);
+        }
+        .topbar-user .avatar {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .topbar-user .avatar svg { color: #fff; }
+        .topbar-user .info { line-height: 1.2; }
+        .topbar-user .name { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+        .topbar-user .role { font-size: 9px; color: var(--muted); letter-spacing: 0.3px; }
+        .topbar-logout {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer; transition: 0.2s;
+        }
+        .topbar-logout:hover { background: rgba(239,68,68,0.08); }
+        .topbar-logout svg { color: rgba(255,255,255,0.2); }
+        .topbar-logout:hover svg { color: var(--danger); }
 
         .main {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
+            margin-top: var(--bar-h);
+            padding: 32px 36px 36px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
         }
+        @media (max-width: 720px) { .main { padding: 24px 16px 20px; } }
 
-        .header {
-            position: sticky; top: 0; z-index: 5;
-            background: rgba(5,5,8,0.6);
-            backdrop-filter: blur(12px);
-            padding: 20px 32px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .header h1 { font-size: 18px; font-weight: 500; color: #fff; letter-spacing: 0.5px; }
-        .header p { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 300; }
-
-        .body {
-            padding: 28px 32px 32px;
-            flex: 1;
-        }
+        .page-header { margin-bottom: 28px; }
+        .page-header h1 { font-size: 20px; font-weight: 500; color: #fff; letter-spacing: 0.3px; }
+        .page-header p { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 300; }
 
         .view { display: none; }
-        .view.active { display: block; }
+        .view.active { display: block; animation: fadeUp 0.3s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px 22px;
-            margin-bottom: 20px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-        .stat-card { padding: 18px 20px; position: relative; }
-        .stat-title { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; margin-bottom: 20px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-card { position: relative; }
+        .stat-label { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
         .stat-val { font-size: 26px; font-weight: 600; color: #fff; margin-top: 8px; }
         .stat-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); opacity: 0.03; }
         .stat-icon svg { width: 40px; height: 40px; }
 
-        .chart-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 14px;
-            margin-bottom: 20px;
-        }
+        .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
         @media (max-width: 800px) { .chart-row { grid-template-columns: 1fr; } }
         .chart-wrap { position: relative; height: 240px; }
 
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
-            text-align: left;
-            padding: 10px 14px;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            text-align: left; padding: 10px 14px;
+            font-size: 10px; font-weight: 500; color: var(--muted);
+            letter-spacing: 0.5px; text-transform: uppercase;
             border-bottom: 1px solid var(--border);
         }
         td {
-            padding: 10px 14px;
-            font-size: 12px;
+            padding: 10px 14px; font-size: 12px;
             border-bottom: 1px solid rgba(255,255,255,0.02);
-            color: rgba(255,255,255,0.7);
-            vertical-align: middle;
+            color: rgba(255,255,255,0.7); vertical-align: middle;
         }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: rgba(255,255,255,0.01); }
@@ -232,33 +145,18 @@
         input, select, textarea {
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            width: 100%;
-            font-family: var(--font);
-            font-size: 13px;
-            margin-bottom: 10px;
-            transition: 0.2s;
+            color: #fff; padding: 10px 12px; border-radius: 8px;
+            width: 100%; font-family: var(--font); font-size: 13px;
+            margin-bottom: 10px; transition: 0.2s;
         }
         input:focus, select:focus, textarea:focus { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); }
-
         label { display: block; margin-bottom: 4px; font-size: 10px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
 
         button {
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            font-family: var(--font);
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            border: none; padding: 10px 16px; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 11px;
+            letter-spacing: 0.5px; font-family: var(--font);
+            transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
         }
         .btn-primary { background: #fff; color: #050508; }
         .btn-primary:hover { background: #e8e8e8; }
@@ -275,8 +173,7 @@
 
         .blur-data {
             filter: blur(4px); transition: 0.2s; cursor: pointer;
-            background: rgba(255,255,255,0.02);
-            padding: 2px 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.02); padding: 2px 6px; border-radius: 3px;
             font-family: var(--mono); font-size: 11px; display: inline-block;
         }
         .blur-data:hover { filter: blur(0); background: rgba(255,255,255,0.04); color: #fff; }
@@ -290,16 +187,11 @@
             display: flex; flex-direction: column; gap: 6px;
         }
         .toast {
-            background: rgba(10,10,14,0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            color: #fff; padding: 10px 14px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            min-width: 200px;
-            display: flex; align-items: center; gap: 8px;
-            font-size: 12px; font-weight: 500;
-            transition: 0.4s;
+            background: rgba(10,10,14,0.95); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); color: #fff; padding: 10px 14px;
+            border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 200px; display: flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 500; transition: 0.4s;
         }
         .toast.error { border-left: 2px solid var(--danger); }
         .toast.success { border-left: 2px solid var(--success); }
@@ -310,39 +202,27 @@
             display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .modal {
-            background: rgba(10,10,14,0.95);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            width: 400px; max-width: 100%;
-            text-align: center;
+            background: rgba(10,10,14,0.95); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px;
+            width: 400px; max-width: 100%; text-align: center;
         }
         .modal h2 { margin-top: 6px; color: #fff; font-size: 17px; font-weight: 600; }
         .modal p { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
         .modal-icon { margin-bottom: 10px; color: #fff; opacity: 0.4; }
-
         .key-display-box {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 8px; padding: 3px;
-            display: flex; align-items: center;
-            margin-bottom: 14px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 8px; padding: 3px; display: flex; align-items: center; margin-bottom: 14px;
         }
         .key-display-box input {
             background: transparent; border: none; color: #fff;
             font-family: var(--mono); font-size: 14px; font-weight: 500;
             text-align: center; letter-spacing: 1px; margin-bottom: 0;
         }
-        .key-display-box button {
-            background: rgba(255,255,255,0.04); color: #fff;
-            padding: 6px; border-radius: 6px; width: 32px;
-        }
+        .key-display-box button { background: rgba(255,255,255,0.04); color: #fff; padding: 6px; border-radius: 6px; width: 32px; }
 
         .live-log {
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.01);
-            font-size: 11px;
-            font-family: var(--mono);
+            padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.01);
+            font-size: 11px; font-family: var(--mono);
             display: flex; justify-content: space-between;
         }
         .live-log:last-child { border-bottom: none; }
@@ -356,197 +236,167 @@
         #maint-overlay p { color: rgba(255,255,255,0.3); font-size: 13px; text-align: center; }
 
         @media (max-width: 640px) {
-            .sidebar { width: 0; padding: 0; border: none; }
-            .sidebar:hover { width: 200px; position: fixed; left: 0; top: 0; height: 100%; }
-            .header { padding: 16px 20px; }
-            .body { padding: 20px; }
+            .topbar { padding: 0 12px; gap: 6px; }
+            .topbar-nav { gap: 0; }
+            .topbar-nav a { padding: 6px 8px; font-size: 10px; }
+            .topbar-user .info { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <span>KALI MODS</span>
+    <div class="topbar">
+        <div class="topbar-brand">KALI <span>MODS</span></div>
+        <div class="topbar-nav" id="topbar-nav">
+            <a class="active" onclick="nav('dash')">Dashboard</a>
+            <a onclick="nav('users')">Usuários</a>
+            <a onclick="nav('admins')" id="nav-admins" style="display:none">Admins</a>
+            <a onclick="nav('files')" id="nav-files">Downloads</a>
+            <a onclick="nav('bot')" id="nav-bot">Bot</a>
+            <a onclick="nav('sys')" id="nav-sys">Sistema</a>
+            <a onclick="nav('comunidade')">Comunidade</a>
         </div>
-
-        <div class="sidebar-profile">
-            <div class="avatar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="topbar-right">
+            <div class="topbar-user">
+                <div class="avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <div class="info">
+                    <div class="name" id="s-admin-name">Admin</div>
+                    <div class="role"><span id="s-admin-role-badge"></span></div>
+                </div>
             </div>
-            <div class="info">
-                <div class="name" id="s-admin-name">---</div>
-                <div class="role"><span id="s-admin-role-badge"></span></div>
+            <div class="topbar-logout" onclick="location.href='/auth/logout'" title="Sair">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </div>
-        </div>
-
-        <div class="nav-items">
-            <div class="nav-item active" onclick="nav('dash', this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                <span class="label">Dashboard</span>
-            </div>
-            <div class="nav-item" onclick="nav('users', this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span class="label">Usuários</span>
-            </div>
-            <div class="nav-item" onclick="nav('admins', this)" id="nav-admins" style="display:none">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span class="label">Admins</span>
-            </div>
-            <div class="nav-item" onclick="nav('files', this)" id="nav-files">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                <span class="label">Downloads</span>
-            </div>
-            <div class="nav-item" onclick="nav('bot', this)" id="nav-bot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span class="label">Bot</span>
-            </div>
-            <div class="nav-item" onclick="nav('sys', this)" id="nav-sys">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span class="label">Sistema</span>
-            </div>
-            <div class="nav-item" onclick="nav('comunidade', this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span class="label">Comunidade</span>
-            </div>
-        </div>
-
-        <div class="nav-logout" onclick="location.href='/auth/logout'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span class="label">Sair</span>
         </div>
     </div>
 
     <div class="main">
-        <div class="header">
+        <div class="page-header">
             <h1 id="header-title">Dashboard</h1>
             <p id="header-sub">Painel administrativo do sistema KALI MODS.</p>
         </div>
 
-        <div class="body">
-            <div id="view-dash" class="view active">
-                <div class="grid-2">
-                    <div class="card stat-card">
-                        <div class="stat-title">Total de Licenças</div>
-                        <div class="stat-val" id="d-total">...</div>
-                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="stat-title">Status do Sistema</div>
-                        <div class="stat-val" id="d-status" style="font-size:22px;color:var(--success);">ONLINE</div>
-                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>
-                    </div>
+        <div id="view-dash" class="view active">
+            <div class="grid-2">
+                <div class="card stat-card">
+                    <div class="stat-label">Total de Licenças</div>
+                    <div class="stat-val" id="d-total">...</div>
+                    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
                 </div>
-                <div class="chart-row">
-                    <div class="card">
-                        <div style="margin-bottom:12px;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Logs de Login (7 dias)</div>
-                        <div class="chart-wrap"><canvas id="loginChart"></canvas></div>
-                    </div>
-                    <div class="card" style="padding:0;overflow:hidden">
-                        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Live Logs</div>
-                        <div id="tb-loader-logs" style="padding:12px 16px;overflow-y:auto;height:260px;font-family:var(--mono);font-size:11px;"></div>
-                    </div>
+                <div class="card stat-card">
+                    <div class="stat-label">Status do Sistema</div>
+                    <div class="stat-val" id="d-status" style="font-size:22px;color:var(--success);">ONLINE</div>
+                    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>
                 </div>
             </div>
-
-            <div id="view-users" class="view">
+            <div class="chart-row">
                 <div class="card">
-                    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:end;">
-                        <div style="flex:2;position:relative;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:12px;color:rgba(255,255,255,0.15)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input id="user-search" placeholder="Pesquisar" style="padding-left:36px;margin-bottom:0;" onkeyup="filterUsers()">
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:end;">
-                            <div style="width:120px;"><select id="gen-days" style="margin-bottom:0;padding:11px 10px;"><option value="30">30 Dias</option><option value="lifetime">Vitalício</option></select></div>
-                            <button class="btn-primary" onclick="generateKey()" style="flex-shrink:0;">+ Key</button>
-                        </div>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th style="width:40px">Avatar</th><th>Usuário</th><th>Key</th><th>HWID</th><th>IP</th><th>Expiração</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
-                            <tbody id="tb-users"></tbody>
-                        </table>
-                    </div>
+                    <div style="margin-bottom:12px;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Logs de Login (7 dias)</div>
+                    <div class="chart-wrap"><canvas id="loginChart"></canvas></div>
+                </div>
+                <div class="card" style="padding:0;overflow:hidden">
+                    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Live Logs</div>
+                    <div id="tb-loader-logs" style="padding:12px 16px;overflow-y:auto;height:260px;font-family:var(--mono);font-size:11px;"></div>
                 </div>
             </div>
+        </div>
 
-            <div id="view-files" class="view">
-                <div class="card">
-                    <div style="display:flex;gap:12px;margin-bottom:16px;align-items:end;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:150px;"><input id="f-name" placeholder="Nome" style="margin-bottom:0"></div>
-                        <div style="flex:2;min-width:200px;"><input id="f-url" placeholder="URL" style="margin-bottom:0"></div>
-                        <div style="flex:1;min-width:100px;"><input id="f-ver" placeholder="Versão" style="margin-bottom:0"></div>
-                        <button class="btn-primary" onclick="addFile()" style="flex-shrink:0;">Add</button>
+        <div id="view-users" class="view">
+            <div class="card">
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:end;">
+                    <div style="flex:2;position:relative;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:13px;top:12px;color:rgba(255,255,255,0.15)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input id="user-search" placeholder="Pesquisar" style="padding-left:36px;margin-bottom:0;" onkeyup="filterUsers()">
                     </div>
-                    <div class="table-wrap">
-                        <table><thead><tr><th>Nome</th><th>Link</th><th>Versão</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-files"></tbody></table>
+                    <div style="display:flex;gap:8px;align-items:end;">
+                        <div style="width:120px;"><select id="gen-days" style="margin-bottom:0;padding:11px 10px;"><option value="30">30 Dias</option><option value="lifetime">Vitalício</option></select></div>
+                        <button class="btn-primary" onclick="generateKey()" style="flex-shrink:0;">+ Key</button>
                     </div>
                 </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th style="width:40px">Avatar</th><th>Usuário</th><th>Key</th><th>HWID</th><th>IP</th><th>Expiração</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+                        <tbody id="tb-users"></tbody>
+                    </table>
+                </div>
             </div>
+        </div>
 
-            <div id="view-bot" class="view">
-                <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
-                    <div class="card" style="margin-bottom:0;">
-                        <div style="font-size:14px;font-weight:600;margin-bottom:20px;">Credenciais do Bot</div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                            <div><label>Bot Token</label><input type="password" id="bot-token" placeholder="Token"></div>
-                            <div><label>Client ID</label><input type="text" id="bot-client-id" placeholder="App ID"></div>
-                            <div><label>Canal de Voz</label><input type="text" id="bot-voice-id" placeholder="Voice ID"></div>
-                            <div><label>ID do Dono</label><input type="text" id="bot-owner-id" placeholder="Owner ID"></div>
-                        </div>
-                        <div style="display:flex;gap:12px;margin-top:16px;">
-                            <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
-                            <button class="btn-danger" onclick="restartBot()">Reiniciar</button>
-                        </div>
-                    </div>
-                    <div class="card" style="margin-bottom:0;">
-                        <div style="font-size:14px;font-weight:600;margin-bottom:14px;">Status</div>
-                        <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border);">
-                            <div style="font-weight:600;color:var(--success);font-size:14px;">BOT RODANDO</div>
-                            <div style="font-size:12px;color:var(--muted);margin-top:4px;">KALI MODS System</div>
-                        </div>
-                    </div>
+        <div id="view-files" class="view">
+            <div class="card">
+                <div style="display:flex;gap:12px;margin-bottom:16px;align-items:end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:150px;"><input id="f-name" placeholder="Nome" style="margin-bottom:0"></div>
+                    <div style="flex:2;min-width:200px;"><input id="f-url" placeholder="URL" style="margin-bottom:0"></div>
+                    <div style="flex:1;min-width:100px;"><input id="f-ver" placeholder="Versão" style="margin-bottom:0"></div>
+                    <button class="btn-primary" onclick="addFile()" style="flex-shrink:0;">Add</button>
+                </div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>Nome</th><th>Link</th><th>Versão</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-files"></tbody></table>
                 </div>
             </div>
+        </div>
 
-            <div id="view-sys" class="view">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
-                    <div class="card" style="margin-bottom:0;">
-                        <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Mensagem Global</div>
-                        <textarea id="sys-msg" rows="4" style="resize:none;"></textarea>
-                        <button class="btn-primary" onclick="saveSettings()" style="width:100%;margin-top:12px;">Salvar</button>
+        <div id="view-bot" class="view">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+                <div class="card" style="margin-bottom:0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:20px;">Credenciais do Bot</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Bot Token</label><input type="password" id="bot-token" placeholder="Token"></div>
+                        <div><label>Client ID</label><input type="text" id="bot-client-id" placeholder="App ID"></div>
+                        <div><label>Canal de Voz</label><input type="text" id="bot-voice-id" placeholder="Voice ID"></div>
+                        <div><label>ID do Dono</label><input type="text" id="bot-owner-id" placeholder="Owner ID"></div>
                     </div>
-                    <div class="card" style="margin-bottom:0;">
-                        <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Manutenção</div>
-                        <div id="maint-txt" style="margin-bottom:14px;font-weight:600;font-size:20px;">NORMAL</div>
-                        <button id="btn-maint" class="btn-danger" onclick="toggleMaint()" style="width:100%;">Bloquear</button>
+                    <div style="display:flex;gap:12px;margin-top:16px;">
+                        <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
+                        <button class="btn-danger" onclick="restartBot()">Reiniciar</button>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:14px;">Status</div>
+                    <div style="padding:14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border);">
+                        <div style="font-weight:600;color:var(--success);font-size:14px;">BOT RODANDO</div>
+                        <div style="font-size:12px;color:var(--muted);margin-top:4px;">KALI MODS System</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div id="view-admins" class="view">
-                <div class="card">
-                    <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Criar Admin</div>
-                    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:150px;"><label>Usuário</label><input id="new-admin-user" style="margin-bottom:0;"></div>
-                        <div style="flex:1;min-width:150px;"><label>Senha</label><input type="password" id="new-admin-pass" style="margin-bottom:0;"></div>
-                        <div style="width:120px;"><label>Cargo</label><select id="new-admin-role" style="margin-bottom:0;"><option value="admin">Admin</option><option value="owner">Dono</option></select></div>
-                        <button class="btn-primary" onclick="createAdmin()">+ Criar</button>
-                    </div>
+        <div id="view-sys" class="view">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+                <div class="card" style="margin-bottom:0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Mensagem Global</div>
+                    <textarea id="sys-msg" rows="4" style="resize:none;"></textarea>
+                    <button class="btn-primary" onclick="saveSettings()" style="width:100%;margin-top:12px;">Salvar</button>
                 </div>
-                <div class="card">
-                    <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Admins Cadastrados</div>
-                    <div class="table-wrap">
-                        <table><thead><tr><th>ID</th><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-admins"></tbody></table>
-                    </div>
+                <div class="card" style="margin-bottom:0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Manutenção</div>
+                    <div id="maint-txt" style="margin-bottom:14px;font-weight:600;font-size:20px;">NORMAL</div>
+                    <button id="btn-maint" class="btn-danger" onclick="toggleMaint()" style="width:100%;">Bloquear</button>
                 </div>
             </div>
+        </div>
 
-            <div id="view-comunidade" class="view">
-                <p style="color:var(--muted);margin-bottom:24px;font-weight:300;">Usuários ativos na plataforma KALI MODS.</p>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px" id="admin-community-list"></div>
+        <div id="view-admins" class="view">
+            <div class="card">
+                <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Criar Admin</div>
+                <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:150px;"><label>Usuário</label><input id="new-admin-user" style="margin-bottom:0;"></div>
+                    <div style="flex:1;min-width:150px;"><label>Senha</label><input type="password" id="new-admin-pass" style="margin-bottom:0;"></div>
+                    <div style="width:120px;"><label>Cargo</label><select id="new-admin-role" style="margin-bottom:0;"><option value="admin">Admin</option><option value="owner">Dono</option></select></div>
+                    <button class="btn-primary" onclick="createAdmin()">+ Criar</button>
+                </div>
             </div>
+            <div class="card">
+                <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Admins Cadastrados</div>
+                <div class="table-wrap">
+                    <table><thead><tr><th>ID</th><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-admins"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-comunidade" class="view">
+            <p style="color:var(--muted);margin-bottom:24px;font-weight:300;">Usuários ativos na plataforma KALI MODS.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px" id="admin-community-list"></div>
         </div>
     </div>
 
@@ -635,7 +485,7 @@
                 if (data.role === 'owner') {
                     badge.innerText = 'DONO';
                     badge.style.color = '#fff';
-                    document.getElementById('nav-admins').style.display = 'flex';
+                    document.getElementById('nav-admins').style.display = 'inline';
                 } else {
                     badge.innerText = 'ADMIN';
                     badge.style.color = 'var(--muted)';
@@ -646,15 +496,16 @@
             } catch (e) {}
         }
 
-        function nav(id, el) {
+        function nav(id) {
             if (myRole !== 'owner' && (id === 'admins' || id === 'files' || id === 'bot' || id === 'sys')) {
                 showToast('error', 'Apenas o dono pode acessar isso');
                 return;
             }
             document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
             document.getElementById('view-' + id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            el.classList.add('active');
+            document.querySelectorAll('.topbar-nav a').forEach(x => x.classList.remove('active'));
+            const activeEl = document.querySelector(`.topbar-nav a[onclick*="'${id}'"]`);
+            if (activeEl) activeEl.classList.add('active');
             document.getElementById('header-title').innerText = headerTitles[id].title;
             document.getElementById('header-sub').innerText = headerTitles[id].sub;
             if (id === 'dash') loadDash();
@@ -674,14 +525,13 @@
             const s = document.getElementById('d-status');
             s.innerText = data.maintenance === 'true' ? "EM MANUTENÇÃO" : "ONLINE";
             s.style.color = data.maintenance === 'true' ? 'var(--danger)' : 'var(--success)';
-            const logsEl = document.getElementById('tb-loader-logs');
-            logsEl.innerHTML = data.loaderLogs.map(l =>
-                `<div class="live-log"><span style="color:var(--success)">${l.details.replace('Login C++: ','')}</span><span style="color:rgba(255,255,255,0.15)">${l.ip_address}</span></div>`
+            document.getElementById('tb-loader-logs').innerHTML = (data.loaderLogs||[]).map(l =>
+                `<div class="live-log"><span style="color:var(--success)">${(l.details||'').replace('Login C++: ','')}</span><span style="color:rgba(255,255,255,0.15)">${l.ip_address}</span></div>`
             ).join('');
             const ctx = document.getElementById('loginChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-            const dates = data.chartData.map(d => d.date || '');
-            const counts = data.chartData.map(d => d.count);
+            const dates = (data.chartData||[]).map(d => d.date || '');
+            const counts = (data.chartData||[]).map(d => d.count);
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -699,8 +549,7 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: false },
                     scales: {
                         x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.15)' } },
@@ -714,7 +563,6 @@
             usersData = await (await fetch('/api/users')).json();
             renderUsers(usersData);
         }
-
         function renderUsers(list) {
             document.getElementById('tb-users').innerHTML = list.map(u => {
                 const avatar = u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -737,61 +585,42 @@
                 </tr>`;
             }).join('');
         }
-
         function filterUsers() {
             const q = document.getElementById('user-search').value.toLowerCase();
             renderUsers(usersData.filter(u => u.username.toLowerCase().includes(q) || u.license_key.includes(q.toUpperCase())));
         }
-
         async function generateKey() {
             const d = document.getElementById('gen-days').value;
             const r = await (await fetch('/api/users/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: d }) })).json();
-            if (r.success) {
-                document.getElementById('generated-key-input').value = r.key;
-                document.getElementById('modal-key').style.display = 'flex';
-                loadUsers();
-            }
+            if (r.success) { document.getElementById('generated-key-input').value = r.key; document.getElementById('modal-key').style.display = 'flex'; loadUsers(); }
         }
-
         function copyGeneratedKey() {
             const t = document.getElementById("generated-key-input");
-            t.select();
-            t.setSelectionRange(0, 99999);
-            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t.value);
-            else document.execCommand('copy');
+            t.select(); t.setSelectionRange(0, 99999);
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t.value); else document.execCommand('copy');
             showToast('success', 'Copiado!');
         }
-
         async function act(id, action) {
             await fetch('/api/users/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action }) });
-            loadUsers();
-            showToast('success', 'Ação realizada!');
-            closeModal('modal-confirm');
+            loadUsers(); showToast('success', 'Ação realizada!'); closeModal('modal-confirm');
         }
 
         async function loadFiles() {
             const f = await (await fetch('/api/downloads')).json();
-            document.getElementById('tb-files').innerHTML = f.map(x =>
+            document.getElementById('tb-files').innerHTML = (f||[]).map(x =>
                 `<tr><td style="color:#fff;font-weight:500">${x.name}</td><td style="color:var(--muted)">${x.url}</td><td>${x.version}</td><td style="text-align:right"><button class="btn-icon danger" onclick="openConfirmAction('Deletar','Remover download?',()=>delFile(${x.id}))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`
             ).join('');
         }
-
         async function addFile() {
-            const n = document.getElementById('f-name').value;
-            const u = document.getElementById('f-url').value;
+            const n = document.getElementById('f-name').value, u = document.getElementById('f-url').value;
             if (!n || !u) return showToast('error', 'Preencha todos os campos!');
             await fetch('/api/downloads/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n, url: u, version: document.getElementById('f-ver').value }) });
-            loadFiles();
-            showToast('success', 'Download adicionado!');
-            document.getElementById('f-name').value = '';
-            document.getElementById('f-url').value = '';
-            document.getElementById('f-ver').value = '';
+            loadFiles(); showToast('success', 'Download adicionado!');
+            document.getElementById('f-name').value = ''; document.getElementById('f-url').value = ''; document.getElementById('f-ver').value = '';
         }
-
         async function delFile(id) {
             await fetch('/api/downloads/del', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadFiles();
-            closeModal('modal-confirm');
+            loadFiles(); closeModal('modal-confirm');
         }
 
         async function loadBotSettings() {
@@ -801,26 +630,13 @@
             document.getElementById('bot-voice-id').value = s.voice_id || '';
             document.getElementById('bot-owner-id').value = s.owner_id || '';
         }
-
         async function saveBotSettings() {
-            await fetch('/api/admin/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    bot_token: document.getElementById('bot-token').value,
-                    client_id: document.getElementById('bot-client-id').value,
-                    voice_id: document.getElementById('bot-voice-id').value,
-                    owner_id: document.getElementById('bot-owner-id').value
-                })
-            });
+            await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bot_token: document.getElementById('bot-token').value, client_id: document.getElementById('bot-client-id').value, voice_id: document.getElementById('bot-voice-id').value, owner_id: document.getElementById('bot-owner-id').value }) });
             showToast('success', 'Salvo!');
         }
-
         async function restartBot() {
             openConfirmAction('Reiniciar Bot', 'Isso desconectará o bot.', async () => {
-                await fetch('/api/admin/restart-bot', { method: 'POST' });
-                showToast('success', 'Bot reiniciado!');
-                closeModal('modal-confirm');
+                await fetch('/api/admin/restart-bot', { method: 'POST' }); showToast('success', 'Bot reiniciado!'); closeModal('modal-confirm');
             });
         }
 
@@ -830,74 +646,44 @@
             maint = s.maintenance === 'true';
             renderMaint();
         }
-
         function renderMaint() {
-            const t = document.getElementById('maint-txt');
-            const b = document.getElementById('btn-maint');
-            if (maint) {
-                t.innerText = "BLOQUEADO";
-                t.style.color = "var(--danger)";
-                b.innerText = "Liberar Acesso";
-                b.className = "btn-primary";
-            } else {
-                t.innerText = "NORMAL";
-                t.style.color = "var(--success)";
-                b.innerText = "Bloquear Acesso";
-                b.className = "btn-danger";
-            }
+            const t = document.getElementById('maint-txt'), b = document.getElementById('btn-maint');
+            if (maint) { t.innerText = "BLOQUEADO"; t.style.color = "var(--danger)"; b.innerText = "Liberar Acesso"; b.className = "btn-primary"; }
+            else { t.innerText = "NORMAL"; t.style.color = "var(--success)"; b.innerText = "Bloquear Acesso"; b.className = "btn-danger"; }
         }
-
         async function toggleMaint() {
             openConfirmAction(maint ? "Liberar?" : "Bloquear?", maint ? "Restaurar acesso." : "Interromper acesso.", async () => {
                 maint = !maint;
                 await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maintenance: maint.toString() }) });
                 if (myRole !== 'owner') document.getElementById('maint-overlay').style.display = maint ? 'flex' : 'none';
-                renderMaint();
-                showToast('success', 'Status alterado!');
-                closeModal('modal-confirm');
+                renderMaint(); showToast('success', 'Status alterado!'); closeModal('modal-confirm');
             });
         }
-
         async function saveSettings() {
             await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ global_msg: document.getElementById('sys-msg').value }) });
             showToast('success', 'Salvo!');
         }
 
         function openConfirmAction(t, d, cb) {
-            document.getElementById('confirm-title').innerText = t;
-            document.getElementById('confirm-desc').innerText = d;
-            const b = document.getElementById('confirm-btn-action');
-            const n = b.cloneNode(true);
-            b.parentNode.replaceChild(n, b);
-            n.onclick = cb;
-            const isDanger = t.includes('Deletar') || t.includes('Banir') || t.includes('Bloquear');
-            n.className = isDanger ? 'btn-danger' : 'btn-primary';
+            document.getElementById('confirm-title').innerText = t; document.getElementById('confirm-desc').innerText = d;
+            const b = document.getElementById('confirm-btn-action'), n = b.cloneNode(true);
+            b.parentNode.replaceChild(n, b); n.onclick = cb;
+            n.className = (t.includes('Deletar')||t.includes('Banir')||t.includes('Bloquear')) ? 'btn-danger' : 'btn-primary';
             document.getElementById('modal-confirm').style.display = 'flex';
         }
-
         function openAddDays(id) { currentUserId = id; document.getElementById('modal-days').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
         async function confirmAddDays() {
             const d = document.getElementById('modal-days-input').value;
             const r = await (await fetch('/api/users/add-days', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: currentUserId, days: d }) })).json();
-            if (r.success) { showToast('success', `Adicionado ${d} dias!`); closeModal('modal-days'); loadUsers(); }
-            else showToast('error', 'Erro ao adicionar dias');
+            if (r.success) { showToast('success', `Adicionado ${d} dias!`); closeModal('modal-days'); loadUsers(); } else showToast('error', 'Erro');
         }
-
         function copy(t) {
-            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(() => showToast('success', 'Copiado!'));
-            else fallbackCopy(t);
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(() => showToast('success', 'Copiado!')); else fallbackCopy(t);
         }
-
         function fallbackCopy(t) {
-            const a = document.createElement("textarea");
-            a.value = t;
-            a.style.position = "fixed";
-            a.style.left = "-9999px";
-            document.body.appendChild(a);
-            a.focus();
-            a.select();
+            const a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.left = "-9999px";
+            document.body.appendChild(a); a.focus(); a.select();
             try { document.execCommand('copy'); showToast('success', 'Copiado!'); } catch (e) { showToast('error', 'Erro'); }
             document.body.removeChild(a);
         }
@@ -914,78 +700,54 @@
             document.getElementById('modal-p-created').textContent = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '---';
             document.getElementById('modal-profile').classList.add('active');
         }
-
-        function closeProfile() {
-            document.getElementById('modal-profile').classList.remove('active');
-        }
-
+        function closeProfile() { document.getElementById('modal-profile').classList.remove('active'); }
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeProfile(); });
 
         async function loadComunidade() {
             const container = document.getElementById('admin-community-list');
             container.innerHTML = '<div style="color:var(--muted);font-size:13px">Carregando...</div>';
             try {
-                const res = await fetch('/api/client/users');
-                const users = await res.json();
-                container.innerHTML = users.map(u => {
+                const users = await (await fetch('/api/client/users')).json();
+                container.innerHTML = (users||[]).map(u => {
                     const isStaff = u.role === 'owner' || u.role === 'admin';
-                    return `
-                        <div onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:12px;display:flex;flex-direction:column;align-items:center;transition:0.2s;cursor:pointer">
-                            <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:48px;height:48px;border-radius:50%;margin-bottom:10px;border:2px solid transparent;object-fit:cover;">
-                            <div style="font-weight:500;color:#fff;">${u.username || 'Usuário'}</div>
-                            <div style="font-size:9px;font-weight:600;letter-spacing:0.5px;padding:3px 10px;border-radius:12px;margin-top:5px;background:${isStaff ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'};color:${isStaff ? '#fff' : 'rgba(255,255,255,0.4)'}">${(u.role || 'cliente').toUpperCase()}</div>
-                        </div>`;
+                    return `<div onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:12px;display:flex;flex-direction:column;align-items:center;transition:0.2s;cursor:pointer">
+                        <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:48px;height:48px;border-radius:50%;margin-bottom:10px;border:2px solid transparent;object-fit:cover;">
+                        <div style="font-weight:500;color:#fff;">${u.username || 'Usuário'}</div>
+                        <div style="font-size:9px;font-weight:600;letter-spacing:0.5px;padding:3px 10px;border-radius:12px;margin-top:5px;background:${isStaff ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'};color:${isStaff ? '#fff' : 'rgba(255,255,255,0.4)'}">${(u.role || 'cliente').toUpperCase()}</div>
+                    </div>`;
                 }).join('');
-            } catch (e) {
-                container.innerHTML = '<div style="color:var(--danger);font-size:13px">Erro ao carregar.</div>';
-            }
+            } catch (e) { container.innerHTML = '<div style="color:var(--danger);font-size:13px">Erro ao carregar.</div>'; }
         }
 
         function showToast(type, msg) {
-            const c = document.getElementById('notification-area');
-            const e = document.createElement('div');
+            const c = document.getElementById('notification-area'), e = document.createElement('div');
             e.className = 'toast ' + type;
-            e.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">' + (type === 'success' ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>') + '</svg> ' + msg;
+            const icon = type === 'success'
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+            e.innerHTML = icon + ' ' + msg;
             c.appendChild(e);
             setTimeout(() => { e.style.opacity = '0'; e.style.transform = 'translateX(40px)'; setTimeout(() => e.remove(), 400); }, 3000);
         }
 
         async function loadAdmins() {
-            const res = await fetch('/api/admin/admins');
-            const admins = await res.json();
-            document.getElementById('tb-admins').innerHTML = admins.map(a =>
-                `<tr>
-                    <td style="color:var(--muted)">${a.id}</td>
-                    <td style="color:#fff;font-weight:500">${a.username}</td>
-                    <td><span class="badge ${a.role === 'owner' ? 'badge-success' : ''}" style="${a.role !== 'owner' ? 'background:rgba(255,255,255,0.04);color:var(--muted)' : ''}">${(a.role||'admin').toUpperCase()}</span></td>
-                    <td style="text-align:right">${a.role !== 'owner' ? `<button class="btn-icon danger" onclick="openConfirmAction('Deletar Admin','Remover ${a.username}?',()=>deleteAdmin(${a.id}))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : '<span style="color:rgba(255,255,255,0.1);font-size:10px;">---</span>'}</td>
-                </tr>`
+            const admins = await (await fetch('/api/admin/admins')).json();
+            document.getElementById('tb-admins').innerHTML = (admins||[]).map(a =>
+                `<tr><td style="color:var(--muted)">${a.id}</td>
+                <td style="color:#fff;font-weight:500">${a.username}</td>
+                <td><span class="badge ${a.role === 'owner' ? 'badge-success' : ''}" style="${a.role !== 'owner' ? 'background:rgba(255,255,255,0.04);color:var(--muted)' : ''}">${(a.role||'admin').toUpperCase()}</span></td>
+                <td style="text-align:right">${a.role !== 'owner' ? `<button class="btn-icon danger" onclick="openConfirmAction('Deletar Admin','Remover ${a.username}?',()=>deleteAdmin(${a.id}))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : '<span style="color:rgba(255,255,255,0.1);font-size:10px;">---</span>'}</td></tr>`
             ).join('');
         }
-
         async function createAdmin() {
-            const username = document.getElementById('new-admin-user').value.trim();
-            const password = document.getElementById('new-admin-pass').value.trim();
-            const role = document.getElementById('new-admin-role').value;
-            if (!username || !password) return showToast('error', 'Preencha usuário e senha');
-            const res = await (await fetch('/api/admin/create-admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, role })
-            })).json();
-            if (res.success) {
-                showToast('success', `Admin "${username}" criado!`);
-                document.getElementById('new-admin-user').value = '';
-                document.getElementById('new-admin-pass').value = '';
-                loadAdmins();
-            }
+            const u = document.getElementById('new-admin-user').value.trim(), p = document.getElementById('new-admin-pass').value.trim(), r = document.getElementById('new-admin-role').value;
+            if (!u || !p) return showToast('error', 'Preencha usuário e senha');
+            const res = await (await fetch('/api/admin/create-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p, role: r }) })).json();
+            if (res.success) { showToast('success', `Admin "${u}" criado!`); document.getElementById('new-admin-user').value = ''; document.getElementById('new-admin-pass').value = ''; loadAdmins(); }
         }
-
         async function deleteAdmin(id) {
             await fetch('/api/admin/delete-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            showToast('success', 'Admin removido!');
-            closeModal('modal-confirm');
-            loadAdmins();
+            showToast('success', 'Admin removido!'); closeModal('modal-confirm'); loadAdmins();
         }
 
         loadAdminInfo();
@@ -994,8 +756,7 @@
         async function checkMaintenance() {
             if (myRole === 'owner') return;
             try {
-                const res = await fetch('/api/maintenance-status');
-                const data = await res.json();
+                const data = await (await fetch('/api/maintenance-status')).json();
                 document.getElementById('maint-overlay').style.display = data.maintenance ? 'flex' : 'none';
             } catch (e) {}
         }
