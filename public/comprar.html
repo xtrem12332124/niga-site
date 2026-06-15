@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KALI MODS | Comprar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050508;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .brand-line {
+            width: 24px; height: 1px;
+            background: rgba(255,255,255,0.15);
+            margin: 0 auto 20px;
+        }
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .brand h1 span { font-weight: 600; }
+        .brand p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 12px;
+        }
+        .plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .plan {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .plan:hover {
+            border-color: rgba(99,102,241,0.2);
+            background: rgba(99,102,241,0.03);
+        }
+        .plan .days {
+            font-size: 32px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .plan .label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .plan .price {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.5);
+            margin: 16px 0 20px;
+        }
+        .plan .btn {
+            width: 100%;
+            padding: 12px;
+            background: #fff;
+            color: #050508;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .plan .btn:hover {
+            background: #e8e8e8;
+            transform: translateY(-1px);
+        }
+        .plan .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .back {
+            margin-top: 40px;
+        }
+        .back a {
+            font-size: 11px;
+            color: rgba(255,255,255,0.15);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+        .back a:hover { color: rgba(255,255,255,0.5); }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: 0.4s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        @media (max-width: 600px) {
+            .plans { grid-template-columns: 1fr 1fr; }
+            .brand h1 { font-size: 22px; letter-spacing: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="brand">
+        <div class="brand-line"></div>
+        <h1><span>KALI</span> MODS</h1>
+        <p>Escolha sua licença</p>
+    </div>
+
+    <div class="plans" id="plans"></div>
+
+    <div class="back"><a href="/">← Voltar ao login</a></div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const products = [
+            { days: 1, label: '1 Dia' },
+            { days: 7, label: '7 Dias' },
+            { days: 30, label: '30 Dias' },
+            { days: 60, label: '60 Dias' },
+            { days: 120, label: '120 Dias' }
+        ];
+
+        const plansEl = document.getElementById('plans');
+        const toastEl = document.getElementById('toast');
+
+        products.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'plan';
+            div.innerHTML = `
+                <div class="days">${p.days}</div>
+                <div class="label">${p.label}</div>
+                <div class="price" id="price-${p.days}">---</div>
+                <button class="btn" onclick="buy(${p.days})" id="btn-${p.days}">Comprar</button>
+            `;
+            plansEl.appendChild(div);
+        });
+
+        async function buy(days) {
+            const btn = document.getElementById('btn-' + days);
+            btn.disabled = true;
+            btn.textContent = 'Aguarde...';
+            try {
+                const res = await fetch('/api/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days })
+                });
+                const data = await res.json();
+                if (data.url) {
+                    location.href = data.url;
+                } else {
+                    showToast(data.error || 'Erro ao criar pagamento');
+                    btn.disabled = false;
+                    btn.textContent = 'Comprar';
+                }
+            } catch (e) {
+                showToast('Erro de conexão');
+                btn.disabled = false;
+                btn.textContent = 'Comprar';
+            }
+        }
+
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 4000);
+        }
+    </script>
+</body>
+</html>

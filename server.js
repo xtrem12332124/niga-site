@@ -262,20 +262,6 @@ async function registerCommands(clientId, token) {
                         { name: '999 Dias', value: 999 },
                     )
             ),
-        new SlashCommandBuilder()
-            .setName('comprar')
-            .setDescription('Comprar uma key de licença')
-            .addIntegerOption(option =>
-                option.setName('dias')
-                    .setDescription('Duração da key')
-                    .setRequired(true)
-                    .addChoices(
-                        { name: '7 Dias', value: 7 },
-                        { name: '30 Dias', value: 30 },
-                        { name: '90 Dias', value: 90 },
-                        { name: '120 Dias', value: 120 },
-                    )
-            )
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(token);
@@ -395,61 +381,6 @@ client.on('interactionCreate', async interaction => {
             return interaction.editReply({ embeds: [embed] });
         }
 
-        if (interaction.commandName === 'comprar') {
-            const config = await getBotConfig();
-            const stripeKey = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
-            const priceMap = {
-                7: config.stripe_price_7,
-                30: config.stripe_price_30,
-                90: config.stripe_price_90,
-                120: config.stripe_price_120
-            };
-
-            if (!stripeKey) {
-                return interaction.editReply('❌ Sistema de pagamento não configurado.');
-            }
-
-            const days = interaction.options.getInteger('dias');
-            const priceId = priceMap[days];
-
-            if (!priceId) {
-                return interaction.editReply('❌ Preço não configurado para esta duração.');
-            }
-
-            try {
-                const s = Stripe(stripeKey);
-                const session = await s.checkout.sessions.create({
-                    mode: 'payment',
-                    line_items: [{ price: priceId, quantity: 1 }],
-                    metadata: {
-                        discord_id: interaction.user.id,
-                        username: interaction.user.username,
-                        days: String(days)
-                    },
-                    success_url: config.stripe_success_url || 'https://discord.com/app',
-                    cancel_url: config.stripe_cancel_url || 'https://discord.com/app'
-                });
-
-                const embed = new EmbedBuilder()
-                    .setColor(0x1E40AF)
-                    .setTitle('💳 Pagamento')
-                    .setDescription(`Clique no link abaixo para pagar **${days} dias** de licença:`)
-                    .addFields({ name: 'Link', value: session.url });
-
-                await interaction.editReply({ embeds: [embed] });
-
-                await dbRun(
-                    "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
-                    ['STRIPE_CHECKOUT', `Usuário ${interaction.user.id} iniciou compra ${days}d - ${session.id}`, 'BOT']
-                );
-            } catch (e) {
-                console.error('Stripe error:', e);
-                await interaction.editReply('❌ Erro ao criar pagamento. Tente novamente mais tarde.');
-            }
-
-            return;
-        }
-
     } catch (error) {
         console.error("💥 Erro no comando:", error);
         interaction.editReply('❌ Ocorreu um erro interno.').catch(() => {});
@@ -487,37 +418,49 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         const username = session.metadata.username;
         const days = parseInt(session.metadata.days) || 30;
 
-        if (!discordId) return res.json({ received: true });
-
         try {
             const key = "HK-" + crypto.randomBytes(4).toString('hex').toUpperCase();
             const date = new Date();
             date.setDate(date.getDate() + days);
             const expiryDate = date.toISOString().split('T')[0];
 
+            if (discordId) {
+                await dbRun(
+                    "INSERT INTO users (license_key, expiry_date, discord_id, username) VALUES (?, ?, ?, ?)",
+                    [key, expiryDate, discordId, username || 'User']
+                );
+            } else {
+                await dbRun(
+                    "INSERT INTO users (license_key, expiry_date) VALUES (?, ?)",
+                    [key, expiryDate]
+                );
+            }
+
             await dbRun(
-                "INSERT INTO users (license_key, expiry_date, discord_id, username) VALUES (?, ?, ?, ?)",
-                [key, expiryDate, discordId, username]
+                "INSERT INTO settings (key, value) VALUES (?, ?)",
+                ['stripe_key_' + session.id, key]
             );
 
             await dbRun(
                 "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
-                ['STRIPE_PAYMENT', `Key ${key} gerada para ${username} (${discordId}) - ${days}d - ${session.id}`, 'STRIPE']
+                ['STRIPE_PAYMENT', `Key ${key} gerada (${days}d) - ${session.id}`, 'STRIPE']
             );
 
-            const user = await client.users.fetch(discordId).catch(() => null);
-            if (user) {
-                const embed = new EmbedBuilder()
-                    .setColor(0x22c55e)
-                    .setTitle('✅ Pagamento Confirmado')
-                    .setDescription('Sua licença foi gerada com sucesso!')
-                    .addFields(
-                        { name: 'Key', value: `||${key}||`, inline: true },
-                        { name: 'Duração', value: `${days} dias`, inline: true },
-                        { name: 'Expira em', value: expiryDate, inline: true },
-                        { name: 'Ativar', value: 'Use `/ativar key` para vincular ao Discord' }
-                    );
-                await user.send({ embeds: [embed] }).catch(() => {});
+            if (discordId) {
+                const user = await client.users.fetch(discordId).catch(() => null);
+                if (user) {
+                    const embed = new EmbedBuilder()
+                        .setColor(0x22c55e)
+                        .setTitle('✅ Pagamento Confirmado')
+                        .setDescription('Sua licença foi gerada com sucesso!')
+                        .addFields(
+                            { name: 'Key', value: `||${key}||`, inline: true },
+                            { name: 'Duração', value: `${days} dias`, inline: true },
+                            { name: 'Expira em', value: expiryDate, inline: true },
+                            { name: 'Ativar', value: 'Use `/ativar key` para vincular ao Discord' }
+                        );
+                    await user.send({ embeds: [embed] }).catch(() => {});
+                }
             }
         } catch (e) {
             console.error('Stripe webhook error:', e);
@@ -525,6 +468,59 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     }
 
     res.json({ received: true });
+});
+
+app.get('/api/get-key/:sessionId', async (req, res) => {
+    const row = await dbGet("SELECT value FROM settings WHERE key = ?", ['stripe_key_' + req.params.sessionId]);
+    if (row) {
+        res.json({ key: row.value });
+    } else {
+        res.json({ key: null });
+    }
+});
+
+app.post('/api/create-checkout', async (req, res) => {
+    const config = await getBotConfig();
+    const stripeKey = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
+    const days = req.body.days;
+
+    const priceMap = {
+        1: config.stripe_price_1,
+        7: config.stripe_price_7,
+        30: config.stripe_price_30,
+        60: config.stripe_price_60,
+        120: config.stripe_price_120
+    };
+
+    if (!stripeKey) {
+        return res.json({ success: false, error: 'Pagamentos não configurados.' });
+    }
+
+    const priceId = priceMap[days];
+    if (!priceId) {
+        return res.json({ success: false, error: 'Preço não configurado para esta duração.' });
+    }
+
+    try {
+        const s = Stripe(stripeKey);
+        const session = await s.checkout.sessions.create({
+            mode: 'payment',
+            line_items: [{ price: priceId, quantity: 1 }],
+            metadata: { days: String(days) },
+            success_url: `${req.protocol}://${req.get('host')}/sucesso.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/comprar.html`
+        });
+
+        await dbRun(
+            "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
+            ['STRIPE_CHECKOUT', `Compra iniciada: ${days}d - ${session.id}`, req.ip]
+        );
+
+        res.json({ success: true, url: session.url });
+    } catch (e) {
+        console.error('Stripe error:', e);
+        res.json({ success: false, error: 'Erro ao criar pagamento.' });
+    }
 });
 
 app.use(express.json());
