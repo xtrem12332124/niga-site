@@ -804,10 +804,13 @@ app.get('/api/emergency-unban', async (req, res) => {
     res.send('Todos os IPs foram desbanidos. Tente logar novamente.');
 });
 
-app.get('/api/admin/me', requireAdmin, (req, res) => {
+app.get('/api/admin/me', requireAdmin, async (req, res) => {
+    const admin = await dbGet("SELECT username, role, avatar_url, discord_id FROM admins WHERE username = ?", [req.session.adminName]);
     res.json({
         username: req.session.adminName,
-        role: req.session.adminRole
+        role: req.session.adminRole,
+        avatar_url: admin ? admin.avatar_url : null,
+        discord_id: admin ? admin.discord_id : null
     });
 });
 

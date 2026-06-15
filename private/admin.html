@@ -265,7 +265,7 @@
         </div>
         <div class="topbar-right">
             <div class="topbar-user">
-                <div class="avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <img id="s-admin-avatar" class="avatar-img" src="https://cdn.discordapp.com/embed/avatars/1.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
                 <div class="info">
                     <div class="name" id="s-admin-name">Admin</div>
                     <div class="role"><span id="s-admin-role-badge"></span></div>
@@ -488,6 +488,7 @@
                 const data = await res.json();
                 myRole = data.role;
                 document.getElementById('s-admin-name').innerText = data.username;
+                document.getElementById('s-admin-avatar').src = data.avatar_url || 'https://cdn.discordapp.com/embed/avatars/1.png';
                 const badge = document.getElementById('s-admin-role-badge');
                 if (data.role === 'owner') {
                     badge.innerText = 'DONO';
