@@ -51,7 +51,7 @@ async function initSystem() {
 
             const settingsRow = await dbGet("SELECT COUNT(*) as count FROM settings WHERE key = 'global_msg'");
             if (settingsRow && settingsRow.count === 0) {
-                await dbRun("INSERT INTO settings (key, value) VALUES ('global_msg', 'Bem-vindo a Haze Sharp')");
+                await dbRun("INSERT INTO settings (key, value) VALUES ('global_msg', 'Bem-vindo a KALI MODS')");
                 await dbRun("INSERT INTO settings (key, value) VALUES ('maintenance', 'false')");
                 await dbRun("INSERT INTO settings (key, value) VALUES ('bot_token', ?)", [process.env.DISCORD_BOT_TOKEN || '']);
                 await dbRun("INSERT INTO settings (key, value) VALUES ('client_id', ?)", [process.env.DISCORD_CLIENT_ID || '']);
@@ -843,6 +843,6 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
 
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Servidor online na porta ${PORT}`);
-        console.log(`🔐 Sistema Haze Sharp operacional`);
+        console.log(`🔐 Sistema KALI MODS operacional`);
     });
 })();
