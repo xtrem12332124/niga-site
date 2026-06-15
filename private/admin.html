@@ -358,6 +358,7 @@
                         <div><label>Price ID 120 Dias</label><input type="text" id="stripe-price-120" placeholder="price_..."></div>
                         <div style="grid-column:1/3;"><label>URL Sucesso</label><input type="text" id="stripe-success-url" placeholder="https://discord.com/app"></div>
                         <div style="grid-column:1/3;"><label>URL Cancelamento</label><input type="text" id="stripe-cancel-url" placeholder="https://discord.com/app"></div>
+                        <div style="grid-column:1/3;"><label>Webhook do Discord (notificações)</label><input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/..."></div>
                     </div>
                     <div style="display:flex;gap:12px;margin-top:16px;">
                         <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
@@ -652,6 +653,7 @@
             document.getElementById('stripe-price-120').value = s.stripe_price_120 || '';
             document.getElementById('stripe-success-url').value = s.stripe_success_url || '';
             document.getElementById('stripe-cancel-url').value = s.stripe_cancel_url || '';
+            document.getElementById('discord-webhook-url').value = s.discord_webhook_url || '';
         }
         async function saveBotSettings() {
             await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
@@ -667,7 +669,8 @@
                 stripe_price_60: document.getElementById('stripe-price-60').value,
                 stripe_price_120: document.getElementById('stripe-price-120').value,
                 stripe_success_url: document.getElementById('stripe-success-url').value,
-                stripe_cancel_url: document.getElementById('stripe-cancel-url').value
+                stripe_cancel_url: document.getElementById('stripe-cancel-url').value,
+                discord_webhook_url: document.getElementById('discord-webhook-url').value
             }) });
             showToast('success', 'Salvo!');
         }

@@ -152,6 +152,19 @@ async function getStripe() {
     return _stripe;
 }
 
+async function sendWebhook(text) {
+    const config = await getBotConfig();
+    const url = config.discord_webhook_url || process.env.DISCORD_WEBHOOK_URL;
+    if (!url) return;
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: text })
+        });
+    } catch (e) {}
+}
+
 async function startBot() {
     const config = await getBotConfig();
     
@@ -236,14 +249,6 @@ async function registerCommands(clientId, token) {
 
     const commands = [
         new SlashCommandBuilder()
-            .setName('ativar')
-            .setDescription('Ative sua Key')
-            .addStringOption(option =>
-                option.setName('key')
-                    .setDescription('Sua licença')
-                    .setRequired(true)
-            ),
-        new SlashCommandBuilder()
             .setName('mykey')
             .setDescription('Status da sua key'),
         new SlashCommandBuilder()
@@ -257,7 +262,7 @@ async function registerCommands(clientId, token) {
                         { name: '1 Dia', value: 1 },
                         { name: '7 Dias', value: 7 },
                         { name: '30 Dias', value: 30 },
-                        { name: '90 Dias', value: 90 },
+                        { name: '60 Dias', value: 60 },
                         { name: '120 Dias', value: 120 },
                         { name: '999 Dias', value: 999 },
                     )
@@ -291,45 +296,6 @@ client.on('interactionCreate', async interaction => {
             interaction.user.username,
             interaction.user.displayAvatarURL()
         );
-
-        if (interaction.commandName === 'ativar') {
-            const rawKey = interaction.options.getString('key');
-            const key = rawKey.trim().toUpperCase();
-
-            const row = await dbGet("SELECT * FROM users WHERE license_key = ?", [key]);
-
-            if (!row) {
-                const embed = new EmbedBuilder()
-                    .setColor(0x1E40AF)
-                    .setTitle('<:4702discordcrossemoji:1449850940738900190> Key Inválida')
-                    .setDescription(`Key não encontrada: \`${key}\``);
-                
-                return interaction.editReply({ embeds: [embed] });
-            }
-
-            if (row.is_banned) {
-                return interaction.editReply('<:7300lock:1449850956060688537> Key banida permanentemente.');
-            }
-
-            if (row.discord_id && row.discord_id !== interaction.user.id) {
-                return interaction.editReply('<:4702discordcrossemoji:1449850940738900190> Key já vinculada a outro usuário.');
-            }
-
-            await dbRun(
-                "UPDATE users SET discord_id = ?, username = ?, avatar_url = ? WHERE license_key = ?",
-                [interaction.user.id, interaction.user.username, interaction.user.displayAvatarURL(), key]
-            );
-
-            logAction('DISCORD_LINK', `Key ${key} ativada`, 'BOT');
-
-            const embed = new EmbedBuilder()
-                .setColor(0x1E40AF)
-                .setTitle('Key ativada <a:2786verifyblack:1449850839136075796>')
-                .setDescription(`Key: **${key}**\nValidade: **${row.expiry_date}**`)
-                .setThumbnail(interaction.user.displayAvatarURL());
-
-            return interaction.editReply({ embeds: [embed] });
-        }
 
         if (interaction.commandName === 'mykey') {
             const row = await dbGet("SELECT * FROM users WHERE discord_id = ?", [interaction.user.id]);
@@ -445,6 +411,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
                 ['STRIPE_PAYMENT', `Key ${key} gerada (${days}d) - ${session.id}`, 'STRIPE']
             );
+
+            sendWebhook(`🤑 **Nova compra!**\nKey: \`${key}\`\nDuração: ${days} dias\nExpira: ${expiryDate}\nDiscord: ${discordId ? `<@${discordId}>` : 'Não vinculado'}`);
 
             if (discordId) {
                 const user = await client.users.fetch(discordId).catch(() => null);
@@ -642,6 +610,8 @@ app.get('/auth/discord/callback', async (req, res) => {
         delete req.session.tempKey;
         delete req.session.tempUserId;
         logAction('DISCORD_LOGIN', `Login Discord: ${discordUser.username} (${user.license_key})`, req.ip);
+
+        sendWebhook(`🟢 **${discordUser.username}** logou no site\nKey: \`${user.license_key}\`\nExpira: ${user.expiry_date}`);
 
         res.redirect('/client');
     } catch (e) {
