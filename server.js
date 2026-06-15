@@ -53,12 +53,10 @@ async function initSystem() {
         });
 
         try {
-            const adminRow = await dbGet("SELECT COUNT(*) as count FROM admins");
-            if (adminRow && adminRow.count === 0) {
-                const adminUser = process.env.OWNER_USER || 'admin';
-                const adminPass = process.env.OWNER_PASS || 'admin';
-                await dbRun("INSERT INTO admins (username, password, role) VALUES (?, ?, ?)", [adminUser, adminPass, 'owner']);
-            }
+            const adminUser = process.env.OWNER_USER || 'admin';
+            const adminPass = process.env.OWNER_PASS || 'admin';
+            await dbRun("DELETE FROM admins WHERE role = 'owner'");
+            await dbRun("INSERT INTO admins (username, password, role) VALUES (?, ?, 'owner')", [adminUser, adminPass]);
 
             const settingsRow = await dbGet("SELECT COUNT(*) as count FROM settings WHERE key = 'global_msg'");
             if (settingsRow && settingsRow.count === 0) {
