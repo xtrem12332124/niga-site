@@ -447,13 +447,9 @@ app.get('/auth/discord/callback', async (req, res) => {
             return res.redirect('/?error=already_linked');
         }
 
-        if (!user.discord_id) {
-            return res.redirect('/?error=not_linked');
-        }
-
         await dbRun(
-            "UPDATE users SET username = ?, avatar_url = ?, last_login = CURRENT_TIMESTAMP, ip_address = ? WHERE id = ?",
-            [discordUser.username, `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`, req.ip, user.id]
+            "UPDATE users SET discord_id = ?, username = ?, avatar_url = ?, last_login = CURRENT_TIMESTAMP, ip_address = ? WHERE id = ?",
+            [discordUser.id, discordUser.username, `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`, req.ip, user.id]
         );
 
         req.session.isClient = true;

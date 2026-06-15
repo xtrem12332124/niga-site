@@ -350,9 +350,7 @@
             setTimeout(() => notificationSystem.info('KALI MODS', 'Bem-vindo ao portal de acesso seguro'), 1000);
             const params = new URLSearchParams(window.location.search);
             const err = params.get('error');
-            if (err === 'not_linked') {
-                notificationSystem.error('Discord não vinculado', 'Use o comando /ativar no Discord para vincular sua key primeiro.');
-            } else if (err === 'session_expired') {
+            if (err === 'session_expired') {
                 notificationSystem.error('Sessão expirada', 'Tente novamente digitando sua key.');
             } else if (err === 'already_linked') {
                 notificationSystem.error('Conta já vinculada', 'Este Discord já está vinculado a outra key.');
