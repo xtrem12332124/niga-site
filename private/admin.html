@@ -347,6 +347,17 @@
                         <div><label>Canal de Voz</label><input type="text" id="bot-voice-id" placeholder="Voice ID"></div>
                         <div><label>ID do Dono</label><input type="text" id="bot-owner-id" placeholder="Owner ID"></div>
                     </div>
+                    <div style="font-size:14px;font-weight:600;margin:20px 0 12px;">Stripe (Pagamentos)</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><label>Stripe Secret Key</label><input type="password" id="stripe-secret-key" placeholder="sk_live_..."></div>
+                        <div><label>Webhook Secret</label><input type="password" id="stripe-webhook-secret" placeholder="whsec_..."></div>
+                        <div><label>Price ID 7 Dias</label><input type="text" id="stripe-price-7" placeholder="price_..."></div>
+                        <div><label>Price ID 30 Dias</label><input type="text" id="stripe-price-30" placeholder="price_..."></div>
+                        <div><label>Price ID 90 Dias</label><input type="text" id="stripe-price-90" placeholder="price_..."></div>
+                        <div><label>Price ID 120 Dias</label><input type="text" id="stripe-price-120" placeholder="price_..."></div>
+                        <div style="grid-column:1/3;"><label>URL Sucesso</label><input type="text" id="stripe-success-url" placeholder="https://discord.com/app"></div>
+                        <div style="grid-column:1/3;"><label>URL Cancelamento</label><input type="text" id="stripe-cancel-url" placeholder="https://discord.com/app"></div>
+                    </div>
                     <div style="display:flex;gap:12px;margin-top:16px;">
                         <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
                         <button class="btn-danger" onclick="restartBot()">Reiniciar</button>
@@ -631,9 +642,30 @@
             document.getElementById('bot-client-id').value = s.client_id || '';
             document.getElementById('bot-voice-id').value = s.voice_id || '';
             document.getElementById('bot-owner-id').value = s.owner_id || '';
+            document.getElementById('stripe-secret-key').value = s.stripe_secret_key || '';
+            document.getElementById('stripe-webhook-secret').value = s.stripe_webhook_secret || '';
+            document.getElementById('stripe-price-7').value = s.stripe_price_7 || '';
+            document.getElementById('stripe-price-30').value = s.stripe_price_30 || '';
+            document.getElementById('stripe-price-90').value = s.stripe_price_90 || '';
+            document.getElementById('stripe-price-120').value = s.stripe_price_120 || '';
+            document.getElementById('stripe-success-url').value = s.stripe_success_url || '';
+            document.getElementById('stripe-cancel-url').value = s.stripe_cancel_url || '';
         }
         async function saveBotSettings() {
-            await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bot_token: document.getElementById('bot-token').value, client_id: document.getElementById('bot-client-id').value, voice_id: document.getElementById('bot-voice-id').value, owner_id: document.getElementById('bot-owner-id').value }) });
+            await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                bot_token: document.getElementById('bot-token').value,
+                client_id: document.getElementById('bot-client-id').value,
+                voice_id: document.getElementById('bot-voice-id').value,
+                owner_id: document.getElementById('bot-owner-id').value,
+                stripe_secret_key: document.getElementById('stripe-secret-key').value,
+                stripe_webhook_secret: document.getElementById('stripe-webhook-secret').value,
+                stripe_price_7: document.getElementById('stripe-price-7').value,
+                stripe_price_30: document.getElementById('stripe-price-30').value,
+                stripe_price_90: document.getElementById('stripe-price-90').value,
+                stripe_price_120: document.getElementById('stripe-price-120').value,
+                stripe_success_url: document.getElementById('stripe-success-url').value,
+                stripe_cancel_url: document.getElementById('stripe-cancel-url').value
+            }) });
             showToast('success', 'Salvo!');
         }
         async function restartBot() {
