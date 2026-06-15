@@ -414,6 +414,12 @@ const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'http://localho
 
 app.post('/auth/discord/login', async (req, res) => {
     const key = req.body.key ? req.body.key.trim().toUpperCase() : "";
+    const clientIp = req.ip || req.connection.remoteAddress;
+
+    const banned = await dbGet("SELECT value FROM settings WHERE key = ?", ['banned_ip_' + clientIp]);
+    if (banned) {
+        return res.json({ success: false, error: 'IP bloqueado por tentativas inválidas' });
+    }
 
     const maintenance = await dbGet("SELECT value FROM settings WHERE key = 'maintenance'");
     if (maintenance && maintenance.value === 'true') {
@@ -422,8 +428,21 @@ app.post('/auth/discord/login', async (req, res) => {
 
     const user = await dbGet("SELECT * FROM users WHERE license_key = ? AND is_banned = 0", [key]);
     if (!user) {
-        return res.json({ success: false, error: 'Key inválida ou banida' });
+        const row = await dbGet("SELECT value FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
+        const attempts = (row ? parseInt(row.value) : 0) + 1;
+
+        if (attempts >= 3) {
+            await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('banned_ip_' || ?, '1')", [clientIp]);
+            await dbRun("DELETE FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
+            logAction('IP_BAN', `IP bloqueado por tentativas: ${clientIp}`, clientIp);
+            return res.json({ success: false, error: 'IP bloqueado por tentativas inválidas' });
+        }
+
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['attempt_ip_' + clientIp, String(attempts)]);
+        return res.json({ success: false, error: `Key inválida. Tentativa ${attempts}/3` });
     }
+
+    await dbRun("DELETE FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
 
     req.session.tempKey = key;
     req.session.tempUserId = user.id;
@@ -612,7 +631,13 @@ app.post('/auth/admin/login', async (req, res) => {
 
 app.post('/auth/client/login', async (req, res) => {
     const key = req.body.key ? req.body.key.trim().toUpperCase() : "";
-    
+    const clientIp = req.ip || req.connection.remoteAddress;
+
+    const banned = await dbGet("SELECT value FROM settings WHERE key = ?", ['banned_ip_' + clientIp]);
+    if (banned) {
+        return res.status(403).json({ success: false, msg: 'IP bloqueado por tentativas inválidas' });
+    }
+
     const maintenance = await dbGet(
         "SELECT value FROM settings WHERE key = 'maintenance'"
     );
@@ -627,6 +652,8 @@ app.post('/auth/client/login', async (req, res) => {
     );
 
     if (user) {
+        await dbRun("DELETE FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
+
         req.session.isClient = true;
         req.session.userId = user.id;
         req.session.userKey = user.license_key;
@@ -636,11 +663,24 @@ app.post('/auth/client/login', async (req, res) => {
             [req.ip, user.id]
         );
         logAction('WEB_LOGIN', `Login web: ${user.license_key}`, req.ip);
+        sendWebhook(`🟢 **Login no site**\nKey: \`${user.license_key}\`\nExpira: ${user.expiry_date}`);
 
         return res.json({ success: true, redirect: '/client' });
     }
+
+    const row = await dbGet("SELECT value FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
+    const attempts = (row ? parseInt(row.value) : 0) + 1;
+
+    if (attempts >= 3) {
+        await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('banned_ip_' || ?, '1')", [clientIp]);
+        await dbRun("DELETE FROM settings WHERE key = ?", ['attempt_ip_' + clientIp]);
+        logAction('IP_BAN', `IP bloqueado por tentativas: ${clientIp}`, clientIp);
+        return res.status(403).json({ success: false, msg: 'IP bloqueado por tentativas inválidas' });
+    }
+
+    await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['attempt_ip_' + clientIp, String(attempts)]);
     
-    res.json({ success: false, error: 'Key inválida ou banida' });
+    res.json({ success: false, error: `Key inválida. Tentativa ${attempts}/3` });
 });
 
 app.get('/verify.php', async (req, res) => {
