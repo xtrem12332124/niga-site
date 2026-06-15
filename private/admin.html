@@ -274,6 +274,24 @@
 
     <div id="notification-area"></div>
     <div id="modal-confirm" class="modal-overlay"><div class="modal"><i class="fas fa-exclamation-triangle modal-icon" style="opacity:0.6"></i><h2 id="confirm-title">Confirmação</h2><p id="confirm-desc">Tem certeza?</p><div style="display:flex; gap:12px; justify-content:center"><button onclick="closeModal('modal-confirm')" style="background:#222; color:#fff">Cancelar</button><button id="confirm-btn-action" class="btn-primary">Confirmar</button></div></div></div>
+    <div id="modal-profile" class="modal-overlay" onclick="if(event.target===this)closeProfile()">
+        <div class="modal" style="max-width:360px;text-align:center;padding:32px">
+            <img id="modal-p-avatar" src="" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--border);margin-bottom:12px;object-fit:cover">
+            <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:2px" id="modal-p-name">---</div>
+            <div id="modal-p-role" style="font-size:11px;font-weight:700;letter-spacing:0.5px;display:inline-block;padding:4px 14px;border-radius:20px;margin-bottom:16px">CLIENTE</div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;text-align:left">
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+                    <span style="color:var(--text-muted)">Discord ID</span>
+                    <span style="color:#fff;font-size:12px;word-break:break-all" id="modal-p-discord">---</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px">
+                    <span style="color:var(--text-muted)">Membro desde</span>
+                    <span style="color:#fff;font-size:12px" id="modal-p-created">---</span>
+                </div>
+            </div>
+            <button onclick="closeProfile()" style="margin-top:16px;background:rgba(255,255,255,0.06);color:var(--text-muted);width:100%">Fechar</button>
+        </div>
+    </div>
     <div id="modal-days" class="modal-overlay"><div class="modal"><i class="fas fa-calendar-plus modal-icon" style="opacity:0.6"></i><h2>Adicionar Dias</h2><p>Quantos dias deseja adicionar?</p><input type="number" id="modal-days-input" value="7" style="margin:12px 0; text-align:center; font-size:18px;"><div style="display:flex; gap:10px; justify-content:center"><button onclick="closeModal('modal-days')" style="background:#222; color:#fff">Cancelar</button><button class="btn-primary" onclick="confirmAddDays()">Confirmar</button></div></div></div>
     <div id="modal-key" class="modal-overlay"><div class="modal"><i class="fas fa-check-circle modal-icon" style="color:var(--success);opacity:1"></i><h2>Key Gerada!</h2><p>Copie a licença abaixo:</p><div class="key-display-box"><input type="text" id="generated-key-input" readonly><button onclick="copyGeneratedKey()"><i class="fas fa-copy"></i></button></div><button class="btn-primary" onclick="closeModal('modal-key')">Concluído</button></div></div>
 
@@ -560,6 +578,25 @@
             document.body.removeChild(a);
         }
 
+        function openProfile(u) {
+            document.getElementById('modal-p-avatar').src = u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+            document.getElementById('modal-p-name').textContent = u.username || 'Usuário';
+            const isStaff = u.role === 'owner' || u.role === 'admin';
+            const badge = document.getElementById('modal-p-role');
+            badge.textContent = u.role ? u.role.toUpperCase() : 'CLIENTE';
+            badge.style.background = isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+            badge.style.color = isStaff ? '#fff' : '#888';
+            document.getElementById('modal-p-discord').textContent = u.discord_id || 'Não vinculado';
+            document.getElementById('modal-p-created').textContent = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '---';
+            document.getElementById('modal-profile').classList.add('active');
+        }
+
+        function closeProfile() {
+            document.getElementById('modal-profile').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeProfile(); });
+
         async function loadComunidade() {
             const container = document.getElementById('admin-community-list');
             container.innerHTML = '<div style="color:#666;font-size:14px;">Carregando...</div>';
@@ -569,7 +606,7 @@
                 container.innerHTML = users.map(u => {
                     const isStaff = u.role === 'owner' || u.role === 'admin';
                     return `
-                        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:center;transition:0.3s;cursor:pointer">
+                        <div onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:center;transition:0.3s;cursor:pointer">
                             <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:52px;height:52px;border-radius:50%;margin-bottom:12px;border:2px solid transparent;object-fit:cover;">
                             <div style="font-weight:600;color:#fff;">${u.username || 'Usuário'}</div>
                             <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;padding:3px 10px;border-radius:20px;margin-top:6px;background:${isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)'};color:${isStaff ? '#fff' : '#888'}">${(u.role || 'cliente').toUpperCase()}</div>
