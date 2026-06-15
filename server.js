@@ -383,7 +383,7 @@ app.use(session({
     secret: 'hk_keys_secure_session',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' }
 }));
 
 // Discord OAuth2
