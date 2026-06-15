@@ -4,265 +4,324 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KALI MODS | Command Center</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         :root {
-            --bg: #08080a;
-            --bg-card: rgba(11, 11, 15, 0.85);
-            --bg-sidebar: rgba(8, 8, 11, 0.95);
-            --border: rgba(255, 255, 255, 0.04);
-            --text: #f0f0f0;
-            --text-muted: #6b6b80;
+            --bg: oklch(0.045 0 0);
+            --bg-card: oklch(0.085 0 0 / 0.85);
+            --bg-sidebar: oklch(0.05 0 0 / 0.95);
+            --border: oklch(0.16 0 0);
+            --text: oklch(0.95 0 0);
+            --text-muted: oklch(0.45 0 0);
             --accent: #6366f1;
-            --accent-dim: rgba(99, 102, 241, 0.08);
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
+            --accent-dim: oklch(0.35 0.18 270 / 0.1);
+            --success: oklch(0.65 0.18 145);
+            --danger: oklch(0.55 0.2 25);
+            --warning: oklch(0.75 0.15 85);
             --font: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+            --sidebar-w: 256px;
         }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: oklch(0.2 0 0); border-radius: 3px; }
         body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 220px; background: var(--bg-sidebar); padding: 20px 16px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-brand { display: flex; align-items: center; gap: 8px; padding: 0 6px; margin-bottom: 28px; }
-        .sidebar-brand-icon { width: 30px; height: 30px; background: var(--accent-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--accent); flex-shrink: 0; }
+        .sidebar {
+            width: var(--sidebar-w); background: var(--bg-sidebar); padding: 20px 16px;
+            display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid var(--border);
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; margin-bottom: 28px; }
+        .sidebar-brand-icon { width: 30px; height: 30px; background: var(--accent-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .sidebar-brand-icon svg { color: var(--accent); }
         .sidebar-brand-text { font-weight: 700; font-size: 15px; color: #fff; letter-spacing: -0.2px; }
+        #sidebar-profile { padding: 12px 14px; margin-bottom: 16px; background: oklch(1 0 0 / 0.02); border: 1px solid var(--border); border-radius: 10px; display: none; }
+        #s-admin-name { font-size: 14px; font-weight: 600; color: #fff; }
         .nav-item { padding: 10px 14px; margin-bottom: 2px; border-radius: 8px; cursor: pointer; color: var(--text-muted); display: flex; gap: 10px; align-items: center; font-size: 13px; font-weight: 500; transition: 0.2s; }
-        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.03); }
+        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .nav-item:hover { color: #fff; background: oklch(1 0 0 / 0.03); }
         .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
-        .nav-item i { width: 16px; text-align: center; font-size: 13px; flex-shrink: 0; }
         .nav-logout { margin-top: auto; color: var(--danger) !important; }
-        .nav-logout:hover { background: rgba(239,68,68,0.06) !important; }
-        .content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; }
+        .nav-logout:hover { background: oklch(0.55 0.2 25 / 0.06) !important; }
+        .content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .header {
+            position: sticky; top: 0; z-index: 20;
+            background: oklch(0.045 0 0 / 0.75); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 36px 18px;
+        }
+        .page-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+        .page-subtitle { color: var(--text-muted); font-size: 13px; }
+        .page-body { padding: 28px 36px; flex: 1; }
         .view-section { display: none; }
         .view-section.active { display: block; }
-        h1 { margin: 0 0 24px 0; font-weight: 700; font-size: 22px; display: flex; align-items: center; gap: 10px; color: #fff; }
-        .card { background: var(--bg-card); padding: 22px; border-radius: 12px; margin-bottom: 20px; }
+        .card { background: var(--bg-card); padding: 22px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px; }
         .stat-card { display: flex; flex-direction: column; justify-content: center; height: 100px; position: relative; }
         .stat-title { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
         .stat-val { font-size: 30px; font-weight: 700; color: #fff; margin-top: 8px; }
-        .stat-icon { position: absolute; right: 20px; font-size: 36px; color: #fff; opacity: 0.04; }
+        .stat-icon { position: absolute; right: 20px; opacity: 0.04; }
+        .stat-icon svg { width: 36px; height: 36px; }
         .grid-3col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 750px; }
-        thead { background: rgba(255,255,255,0.02); }
-        th { text-align: left; color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600; padding: 10px 16px; letter-spacing: 0.4px; }
-        td { padding: 10px 16px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); color: #ddd; vertical-align: middle; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
+        .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: oklch(1 0 0 / 0.02); }
+        th { text-align: left; color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: 600; padding: 10px 14px; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid oklch(1 0 0 / 0.02); color: #ddd; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: oklch(1 0 0 / 0.02); }
         .user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
         .chart-wrap { position: relative; height: 240px; width: 100%; }
-        input, select, textarea { background: rgba(0,0,0,0.3); border: none; color: #fff; padding: 10px 12px; border-radius: 7px; width: 100%; font-family: var(--font); font-size: 13px; margin-bottom: 10px; transition: 0.2s; }
-        input:focus, select:focus, textarea:focus { background: rgba(0,0,0,0.5); }
+        input, select, textarea { background: oklch(0 0 0 / 0.3); border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 7px; width: 100%; font-family: var(--font); font-size: 13px; margin-bottom: 10px; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { background: oklch(0 0 0 / 0.5); border-color: var(--accent-dim); }
         label { display: block; margin-bottom: 4px; font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
-        button { border: none; padding: 10px 16px; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+        button { border: none; padding: 10px 16px; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; font-family: var(--font); }
         .btn-primary { background: #fff; color: #0a0a0c; }
         .btn-primary:hover { background: #e8e8e8; }
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-danger:hover { opacity: 0.85; }
         .btn-sm { padding: 5px 8px; font-size: 10px; }
-        .btn-icon { width: 28px; height: 28px; padding: 0; border-radius: 6px; background: rgba(255,255,255,0.03); color: #aaa; }
-        .btn-icon:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .btn-icon { width: 28px; height: 28px; padding: 0; border-radius: 6px; background: oklch(1 0 0 / 0.03); color: #aaa; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: oklch(1 0 0 / 0.08); color: #fff; }
         .btn-icon.danger:hover { background: var(--danger); color: #fff; }
-        .blur-data { filter: blur(4px); transition: 0.2s; cursor: pointer; background: rgba(255,255,255,0.03); padding: 2px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; display: inline-block; }
-        .blur-data:hover { filter: blur(0); background: rgba(255,255,255,0.06); color: #fff; }
+        .blur-data { filter: blur(4px); transition: 0.2s; cursor: pointer; background: oklch(1 0 0 / 0.03); padding: 2px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 11px; display: inline-block; }
+        .blur-data:hover { filter: blur(0); background: oklch(1 0 0 / 0.06); color: #fff; }
         .badge { padding: 3px 8px; border-radius: 20px; font-size: 9px; font-weight: 700; }
-        .badge-success { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
-        .badge-danger { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+        .badge-success { background: oklch(0.65 0.18 145 / 0.12); color: #4ade80; }
+        .badge-danger { background: oklch(0.55 0.2 25 / 0.12); color: #f87171; }
         #notification-area { position: fixed; bottom: 16px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
-        .toast { background: rgba(12,12,16,0.96); backdrop-filter: blur(10px); border-left: 2px solid #fff; color: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); min-width: 240px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; }
+        .toast {
+            background: oklch(0.07 0 0 / 0.96); backdrop-filter: blur(10px); border-left: 2px solid #fff;
+            color: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            min-width: 240px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500;
+            transition: 0.4s;
+        }
         .toast.error { border-left-color: var(--danger); }
         .toast.success { border-left-color: var(--success); }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 900; display: none; justify-content: center; align-items: center; }
-        .modal { background: #0f0f12; padding: 24px; width: 400px; border-radius: 14px; box-shadow: 0 0 40px rgba(0,0,0,0.5); text-align: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: oklch(0 0 0 / 0.8); backdrop-filter: blur(8px); z-index: 900; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal { background: oklch(0.07 0 0); padding: 24px; width: 400px; max-width: 100%; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 0 40px rgba(0,0,0,0.5); text-align: center; }
         .modal h2 { margin-top: 6px; color: #fff; font-size: 18px; }
         .modal p { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
         .modal-icon { font-size: 30px; margin-bottom: 10px; color: #fff; opacity: 0.6; }
-        .key-display-box { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 3px; display: flex; align-items: center; margin-bottom: 14px; }
+        .key-display-box { background: oklch(0 0 0 / 0.3); border-radius: 8px; border: 1px solid var(--border); padding: 3px; display: flex; align-items: center; margin-bottom: 14px; }
         .key-display-box input { background: transparent; border: none; color: #fff; font-family: var(--font-mono); font-size: 14px; font-weight: bold; text-align: center; letter-spacing: 1px; margin-bottom: 0; }
-        .key-display-box button { background: rgba(255,255,255,0.08); color: #fff; padding: 6px; border-radius: 6px; width: 32px; }
-        .live-log { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 11px; display: flex; justify-content: space-between; }
+        .key-display-box button { background: oklch(1 0 0 / 0.08); color: #fff; padding: 6px; border-radius: 6px; width: 32px; }
+        .live-log { padding: 6px 0; border-bottom: 1px solid oklch(1 0 0 / 0.02); font-size: 11px; display: flex; justify-content: space-between; }
         .live-log:last-child { border-bottom: none; }
+        #maint-overlay {
+            display: none; position: fixed; inset: 0; z-index: 2000;
+            background: oklch(0.05 0 0); backdrop-filter: blur(10px);
+            justify-content: center; align-items: center; flex-direction: column; gap: 16px;
+        }
+        #maint-overlay .maint-icon { font-size: 48px; opacity: 0.4; }
+        #maint-overlay h2 { font-size: 22px; font-weight: 700; color: #fff; }
+        #maint-overlay p { color: oklch(0.5 0 0); font-size: 14px; text-align: center; line-height: 1.6; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-brand-icon"><i class="fas fa-key"></i></div>
+            <div class="sidebar-brand-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            </div>
             <div class="sidebar-brand-text">KALI MODS</div>
         </div>
-        <div id="sidebar-profile" style="padding:10px 12px;margin-bottom:16px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;display:none;">
-            <div style="font-size:14px;font-weight:600;color:#fff;" id="s-admin-name">---</div>
+        <div id="sidebar-profile">
+            <div id="s-admin-name">---</div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
                 <span id="s-admin-role-badge" style="padding:2px 8px;border-radius:10px;font-weight:600;"></span>
             </div>
         </div>
-        <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
-        <div class="nav-item" onclick="nav('users', this)"><i class="fas fa-users"></i> Usuários</div>
-        <div class="nav-item" onclick="nav('admins', this)" id="nav-admins" style="display:none;"><i class="fas fa-shield-halved"></i> Admins</div>
-        <div class="nav-item" onclick="nav('files', this)" id="nav-files"><i class="fas fa-folder-open"></i> Downloads</div>
-        <div class="nav-item" onclick="nav('bot', this)" id="nav-bot"><i class="fab fa-discord"></i> Config Bot</div>
-        <div class="nav-item" onclick="nav('sys', this)" id="nav-sys"><i class="fas fa-cogs"></i> Sistema</div>
-        <div class="nav-item" onclick="nav('comunidade', this)"><i class="fas fa-users"></i> Comunidade</div>
-        <div class="nav-item nav-logout" onclick="location.href='/auth/logout'"><i class="fas fa-sign-out-alt"></i> Sair</div>
+        <div class="nav-item active" onclick="nav('dash', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </div>
+        <div class="nav-item" onclick="nav('users', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Usuários
+        </div>
+        <div class="nav-item" onclick="nav('admins', this)" id="nav-admins" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Admins
+        </div>
+        <div class="nav-item" onclick="nav('files', this)" id="nav-files">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Downloads
+        </div>
+        <div class="nav-item" onclick="nav('bot', this)" id="nav-bot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Config Bot
+        </div>
+        <div class="nav-item" onclick="nav('sys', this)" id="nav-sys">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Sistema
+        </div>
+        <div class="nav-item" onclick="nav('comunidade', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Comunidade
+        </div>
+        <div class="nav-item nav-logout" onclick="location.href='/auth/logout'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair
+        </div>
     </div>
 
     <div class="content">
-        <div id="view-dash" class="view-section active">
-            <h1><i class="fas fa-rocket" style="color:#fff;opacity:0.6"></i> Visão Geral</h1>
-            <div class="grid-2">
-                <div class="card stat-card">
-                    <div class="stat-title">Total de Licenças</div>
-                    <div class="stat-val" id="d-total">...</div>
-                    <i class="fas fa-users stat-icon"></i>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-title">Status do Sistema</div>
-                    <div class="stat-val" id="d-status" style="font-size: 22px; color: var(--success); margin-top: 18px;">ONLINE</div>
-                    <i class="fas fa-wifi stat-icon"></i>
-                </div>
-            </div>
-            <div class="grid-3col">
-                <div class="card">
-                    <div style="margin-bottom:16px; color:var(--text-muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">LOGINS RECENTES (7 DIAS)</div>
-                    <div class="chart-wrap"><canvas id="loginChart"></canvas></div>
-                </div>
-                <div class="card" style="padding:0;overflow:hidden">
-                    <div style="padding:14px 16px; border-bottom:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.5px;text-transform:uppercase;">LIVE LOGS (LOADER)</div>
-                    <div id="tb-loader-logs" style="padding:12px 16px; overflow-y:auto; height:260px; font-family:var(--font-mono); font-size:12px;"></div>
-                </div>
-            </div>
+        <div class="header">
+            <div class="page-title" id="header-title">Visão Geral</div>
+            <div class="page-subtitle" id="header-subtitle">Painel administrativo do sistema KALI MODS.</div>
         </div>
 
-        <div id="view-users" class="view-section">
-            <h1><i class="fas fa-user-shield" style="opacity:0.6"></i> Usuários</h1>
-            <div class="card">
-                <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:end;">
-                    <div style="flex:2; position:relative;">
-                        <i class="fas fa-search" style="position:absolute; left:13px; top:12px; color:#555; font-size:13px;"></i>
-                        <input id="user-search" placeholder="Pesquisar Key, Nome..." style="padding-left:36px; margin-bottom:0;" onkeyup="filterUsers()">
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:end;">
-                        <div style="width:120px;">
-                            <select id="gen-days" style="margin-bottom:0; padding:11px 10px;">
-                                <option value="30">30 Dias</option>
-                                <option value="lifetime">Vitalício</option>
-                            </select>
+        <div class="page-body">
+            <div id="view-dash" class="view-section active">
+                <div class="grid-2">
+                    <div class="card stat-card">
+                        <div class="stat-title">Total de Licenças</div>
+                        <div class="stat-val" id="d-total">...</div>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         </div>
-                        <button class="btn-primary" onclick="generateKey()" style="flex-shrink:0;">+ Key</button>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-title">Status do Sistema</div>
+                        <div class="stat-val" id="d-status" style="font-size: 22px; color: var(--success); margin-top: 18px;">ONLINE</div>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                        </div>
                     </div>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th style="width:50px">Avatar</th><th>Usuário</th><th>License Key</th><th>HWID</th><th>IP</th><th>Expiração</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
-                        <tbody id="tb-users"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-files" class="view-section">
-            <h1><i class="fas fa-cloud" style="opacity:0.6"></i> Downloads</h1>
-            <div class="card">
-                <div style="display:flex; gap:12px; margin-bottom:16px; align-items:end;">
-                    <div style="flex:1"><input id="f-name" placeholder="Nome" style="margin-bottom:0"></div>
-                    <div style="flex:2"><input id="f-url" placeholder="URL" style="margin-bottom:0"></div>
-                    <div style="flex:1"><input id="f-ver" placeholder="Versão" style="margin-bottom:0"></div>
-                    <button class="btn-primary" onclick="addFile()" style="flex-shrink:0;">Add</button>
-                </div>
-                <div class="table-wrap">
-                    <table><thead><tr><th>Nome</th><th>Link</th><th>Versão</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-files"></tbody></table>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-bot" class="view-section">
-            <h1><i class="fab fa-discord" style="opacity:0.6"></i> Configuração do Bot</h1>
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:start;">
-                <div class="card" style="margin-bottom:0;">
-                    <div style="font-size:16px; font-weight:600; margin-bottom:20px;">Credenciais do Bot</div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                        <div><label>Bot Token</label><input type="password" id="bot-token" placeholder="Token do Bot"></div>
-                        <div><label>Client ID</label><input type="text" id="bot-client-id" placeholder="ID do App"></div>
-                        <div><label>Canal de Voz</label><input type="text" id="bot-voice-id" placeholder="ID do Canal"></div>
-                        <div><label>ID do Dono</label><input type="text" id="bot-owner-id" placeholder="Seu Discord ID"></div>
+                <div class="grid-3col">
+                    <div class="card">
+                        <div style="margin-bottom:16px; color:var(--text-muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">LOGS DE LOGIN (7 DIAS)</div>
+                        <div class="chart-wrap"><canvas id="loginChart"></canvas></div>
                     </div>
-                    <div style="display:flex; gap:12px; margin-top:16px;">
-                        <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
-                        <button class="btn-danger" onclick="restartBot()">Reiniciar Bot</button>
-                    </div>
-                </div>
-                <div class="card" style="margin-bottom:0;">
-                    <div style="font-size:16px; font-weight:600; margin-bottom:14px;">Status</div>
-                    <div style="padding:14px; background:rgba(255,255,255,0.03); border-radius:10px;">
-                        <div style="font-weight:600; color:var(--success); font-size:14px;">BOT RODANDO</div>
-                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">KALI MODS System</div>
+                    <div class="card" style="padding:0;overflow:hidden">
+                        <div style="padding:14px 16px; border-bottom:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0.5px;text-transform:uppercase;">LIVE LOGS (LOADER)</div>
+                        <div id="tb-loader-logs" style="padding:12px 16px; overflow-y:auto; height:260px; font-family:var(--font-mono); font-size:12px;"></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-sys" class="view-section">
-            <h1><i class="fas fa-server" style="opacity:0.6"></i> Sistema</h1>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-                <div class="card" style="margin-bottom:0;">
-                    <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Mensagem Global</div>
-                    <textarea id="sys-msg" rows="4" style="resize:none;"></textarea>
-                    <button class="btn-primary" onclick="saveSettings()" style="width:100%; margin-top:12px;">Salvar</button>
-                </div>
-                <div class="card" style="margin-bottom:0;">
-                    <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Manutenção</div>
-                    <div id="maint-txt" style="margin-bottom:14px; font-weight:700; font-size:22px;">NORMAL</div>
-                    <button id="btn-maint" class="btn-danger" onclick="toggleMaint()" style="width:100%;">Bloquear</button>
+            <div id="view-users" class="view-section">
+                <div class="card">
+                    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:end;">
+                        <div style="flex:2; position:relative;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:13px; top:12px; color:#555;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input id="user-search" placeholder="Pesquisar Key, Nome..." style="padding-left:36px; margin-bottom:0;" onkeyup="filterUsers()">
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:end;">
+                            <div style="width:120px;">
+                                <select id="gen-days" style="margin-bottom:0; padding:11px 10px;">
+                                    <option value="30">30 Dias</option>
+                                    <option value="lifetime">Vitalício</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="generateKey()" style="flex-shrink:0;">+ Key</button>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th style="width:50px">Avatar</th><th>Usuário</th><th>License Key</th><th>HWID</th><th>IP</th><th>Expiração</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+                            <tbody id="tb-users"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-admins" class="view-section">
-            <h1><i class="fas fa-shield-halved" style="opacity:0.6"></i> Gerenciar Admins</h1>
-            <div class="card">
-                <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Criar Novo Admin</div>
-                <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
-                    <div style="flex:1;min-width:150px;"><label>Usuário</label><input id="new-admin-user" placeholder="Nome de usuário" style="margin-bottom:0;"></div>
-                    <div style="flex:1;min-width:150px;"><label>Senha</label><input type="password" id="new-admin-pass" placeholder="Senha" style="margin-bottom:0;"></div>
-                    <div style="width:120px;"><label>Cargo</label><select id="new-admin-role" style="margin-bottom:0;"><option value="admin">Admin</option><option value="owner">Dono</option></select></div>
-                    <button class="btn-primary" onclick="createAdmin()">+ Criar</button>
+            <div id="view-files" class="view-section">
+                <div class="card">
+                    <div style="display:flex; gap:12px; margin-bottom:16px; align-items:end; flex-wrap:wrap;">
+                        <div style="flex:1;min-width:150px;"><input id="f-name" placeholder="Nome" style="margin-bottom:0"></div>
+                        <div style="flex:2;min-width:200px;"><input id="f-url" placeholder="URL" style="margin-bottom:0"></div>
+                        <div style="flex:1;min-width:100px;"><input id="f-ver" placeholder="Versão" style="margin-bottom:0"></div>
+                        <button class="btn-primary" onclick="addFile()" style="flex-shrink:0;">Add</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table><thead><tr><th>Nome</th><th>Link</th><th>Versão</th><th style="text-align:right">Ação</th></tr></thead><tbody id="tb-files"></tbody></table>
+                    </div>
                 </div>
             </div>
-            <div class="card">
-                <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Admins Cadastrados</div>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>ID</th><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
-                        <tbody id="tb-admins"></tbody>
-                    </table>
+
+            <div id="view-bot" class="view-section">
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:start;">
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="font-size:16px; font-weight:600; margin-bottom:20px;">Credenciais do Bot</div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                            <div><label>Bot Token</label><input type="password" id="bot-token" placeholder="Token do Bot"></div>
+                            <div><label>Client ID</label><input type="text" id="bot-client-id" placeholder="ID do App"></div>
+                            <div><label>Canal de Voz</label><input type="text" id="bot-voice-id" placeholder="ID do Canal"></div>
+                            <div><label>ID do Dono</label><input type="text" id="bot-owner-id" placeholder="Seu Discord ID"></div>
+                        </div>
+                        <div style="display:flex; gap:12px; margin-top:16px;">
+                            <button class="btn-primary" onclick="saveBotSettings()">Salvar</button>
+                            <button class="btn-danger" onclick="restartBot()">Reiniciar Bot</button>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="font-size:16px; font-weight:600; margin-bottom:14px;">Status</div>
+                        <div style="padding:14px; background:oklch(1 0 0 / 0.03); border-radius:10px; border:1px solid var(--border);">
+                            <div style="font-weight:600; color:var(--success); font-size:14px;">BOT RODANDO</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">KALI MODS System</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-comunidade" class="view-section">
-            <h1><i class="fas fa-users" style="opacity:0.6"></i> Comunidade</h1>
-            <p style="color:var(--text-muted);margin-bottom:24px;">Usuários ativos na plataforma KALI MODS.</p>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px" id="admin-community-list"></div>
+            <div id="view-sys" class="view-section">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Mensagem Global</div>
+                        <textarea id="sys-msg" rows="4" style="resize:none;"></textarea>
+                        <button class="btn-primary" onclick="saveSettings()" style="width:100%; margin-top:12px;">Salvar</button>
+                    </div>
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Manutenção</div>
+                        <div id="maint-txt" style="margin-bottom:14px; font-weight:700; font-size:22px;">NORMAL</div>
+                        <button id="btn-maint" class="btn-danger" onclick="toggleMaint()" style="width:100%;">Bloquear</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-admins" class="view-section">
+                <div class="card">
+                    <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Criar Novo Admin</div>
+                    <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+                        <div style="flex:1;min-width:150px;"><label>Usuário</label><input id="new-admin-user" placeholder="Nome de usuário" style="margin-bottom:0;"></div>
+                        <div style="flex:1;min-width:150px;"><label>Senha</label><input type="password" id="new-admin-pass" placeholder="Senha" style="margin-bottom:0;"></div>
+                        <div style="width:120px;"><label>Cargo</label><select id="new-admin-role" style="margin-bottom:0;"><option value="admin">Admin</option><option value="owner">Dono</option></select></div>
+                        <button class="btn-primary" onclick="createAdmin()">+ Criar</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Admins Cadastrados</div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>ID</th><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
+                            <tbody id="tb-admins"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-comunidade" class="view-section">
+                <p style="color:var(--text-muted);margin-bottom:24px;">Usuários ativos na plataforma KALI MODS.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px" id="admin-community-list"></div>
+            </div>
         </div>
     </div>
 
     <div id="notification-area"></div>
-    <div id="modal-confirm" class="modal-overlay"><div class="modal"><i class="fas fa-exclamation-triangle modal-icon" style="opacity:0.6"></i><h2 id="confirm-title">Confirmação</h2><p id="confirm-desc">Tem certeza?</p><div style="display:flex; gap:12px; justify-content:center"><button onclick="closeModal('modal-confirm')" style="background:#222; color:#fff">Cancelar</button><button id="confirm-btn-action" class="btn-primary">Confirmar</button></div></div></div>
+    <div id="modal-confirm" class="modal-overlay"><div class="modal"><div class="modal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h2 id="confirm-title">Confirmação</h2><p id="confirm-desc">Tem certeza?</p><div style="display:flex; gap:12px; justify-content:center"><button onclick="closeModal('modal-confirm')" style="background:oklch(0.2 0 0); color:#fff">Cancelar</button><button id="confirm-btn-action" class="btn-primary">Confirmar</button></div></div></div>
     <div id="modal-profile" class="modal-overlay" onclick="if(event.target===this)closeProfile()">
         <div class="modal" style="max-width:360px;text-align:center;padding:32px">
             <img id="modal-p-avatar" src="" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--border);margin-bottom:12px;object-fit:cover">
             <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:2px" id="modal-p-name">---</div>
             <div id="modal-p-role" style="font-size:11px;font-weight:700;letter-spacing:0.5px;display:inline-block;padding:4px 14px;border-radius:20px;margin-bottom:16px">CLIENTE</div>
-            <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;text-align:left">
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+            <div style="background:oklch(0 0 0 / 0.3);border-radius:12px;padding:16px;text-align:left">
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid oklch(1 0 0 / 0.04);font-size:13px">
                     <span style="color:var(--text-muted)">Discord ID</span>
                     <span style="color:#fff;font-size:12px;word-break:break-all" id="modal-p-discord">---</span>
                 </div>
@@ -271,21 +330,30 @@
                     <span style="color:#fff;font-size:12px" id="modal-p-created">---</span>
                 </div>
             </div>
-            <button onclick="closeProfile()" style="margin-top:16px;background:rgba(255,255,255,0.06);color:var(--text-muted);width:100%">Fechar</button>
+            <button onclick="closeProfile()" style="margin-top:16px;background:oklch(1 0 0 / 0.06);color:var(--text-muted);width:100%">Fechar</button>
         </div>
     </div>
-    <div id="modal-days" class="modal-overlay"><div class="modal"><i class="fas fa-calendar-plus modal-icon" style="opacity:0.6"></i><h2>Adicionar Dias</h2><p>Quantos dias deseja adicionar?</p><input type="number" id="modal-days-input" value="7" style="margin:12px 0; text-align:center; font-size:18px;"><div style="display:flex; gap:10px; justify-content:center"><button onclick="closeModal('modal-days')" style="background:#222; color:#fff">Cancelar</button><button class="btn-primary" onclick="confirmAddDays()">Confirmar</button></div></div></div>
-    <div id="modal-key" class="modal-overlay"><div class="modal"><i class="fas fa-check-circle modal-icon" style="color:var(--success);opacity:1"></i><h2>Key Gerada!</h2><p>Copie a licença abaixo:</p><div class="key-display-box"><input type="text" id="generated-key-input" readonly><button onclick="copyGeneratedKey()"><i class="fas fa-copy"></i></button></div><button class="btn-primary" onclick="closeModal('modal-key')">Concluído</button></div></div>
+    <div id="modal-days" class="modal-overlay"><div class="modal"><div class="modal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><h2>Adicionar Dias</h2><p>Quantos dias deseja adicionar?</p><input type="number" id="modal-days-input" value="7" style="margin:12px 0; text-align:center; font-size:18px;"><div style="display:flex; gap:10px; justify-content:center"><button onclick="closeModal('modal-days')" style="background:oklch(0.2 0 0); color:#fff">Cancelar</button><button class="btn-primary" onclick="confirmAddDays()">Confirmar</button></div></div></div>
+    <div id="modal-key" class="modal-overlay"><div class="modal"><div class="modal-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--success)"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h2>Key Gerada!</h2><p>Copie a licença abaixo:</p><div class="key-display-box"><input type="text" id="generated-key-input" readonly><button onclick="copyGeneratedKey()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div><button class="btn-primary" onclick="closeModal('modal-key')">Concluído</button></div></div>
 
-    <div id="maint-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:#0b0b0e;backdrop-filter:blur(10px);justify-content:center;align-items:center;flex-direction:column;gap:16px">
-        <div style="font-size:48px;opacity:0.4">🔧</div>
-        <div style="font-size:22px;font-weight:700;color:#fff">Sistema em Manutenção</div>
-        <div style="color:#888;font-size:14px">Estamos realizando atualizações.<br>Volte em alguns minutos.</div>
+    <div id="maint-overlay">
+        <div class="maint-icon">🔧</div>
+        <h2>Sistema em Manutenção</h2>
+        <p>Estamos realizando atualizações.<br>Volte em alguns minutos.</p>
     </div>
 
     <script>
         let usersData = [], maint = false, chartInstance = null, currentUserId = null;
         let myRole = 'admin';
+        const headerTitles = {
+            dash: { title: 'Visão Geral', sub: 'Painel administrativo do sistema KALI MODS.' },
+            users: { title: 'Usuários', sub: 'Gerencie licenças, HWIDs e vínculos.' },
+            admins: { title: 'Admins', sub: 'Gerencie os administradores do sistema.' },
+            files: { title: 'Downloads', sub: 'Gerencie os arquivos disponíveis para download.' },
+            bot: { title: 'Configuração do Bot', sub: 'Configure as credenciais do bot Discord.' },
+            sys: { title: 'Sistema', sub: 'Configurações globais e modo de manutenção.' },
+            comunidade: { title: 'Comunidade', sub: 'Usuários ativos na plataforma KALI MODS.' }
+        };
 
         async function loadAdminInfo() {
             try {
@@ -297,12 +365,12 @@
                 const badge = document.getElementById('s-admin-role-badge');
                 if (data.role === 'owner') {
                     badge.innerText = 'DONO';
-                    badge.style.background = 'rgba(255,255,255,0.12)';
+                    badge.style.background = 'oklch(1 0 0 / 0.12)';
                     badge.style.color = '#fff';
                     document.getElementById('nav-admins').style.display = 'flex';
                 } else {
                     badge.innerText = 'ADMIN';
-                    badge.style.background = 'rgba(255,255,255,0.06)';
+                    badge.style.background = 'oklch(1 0 0 / 0.06)';
                     badge.style.color = 'var(--text-muted)';
                     document.getElementById('nav-files').style.display = 'none';
                     document.getElementById('nav-bot').style.display = 'none';
@@ -321,6 +389,8 @@
             document.getElementById('view-' + id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
             el.classList.add('active');
+            document.getElementById('header-title').innerText = headerTitles[id].title;
+            document.getElementById('header-subtitle').innerText = headerTitles[id].sub;
             if (id === 'dash') loadDash();
             if (id === 'users') loadUsers();
             if (id === 'admins') loadAdmins();
@@ -355,7 +425,7 @@
                         label: 'Logins',
                         data: counts,
                         borderColor: '#fff',
-                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        backgroundColor: 'oklch(1 0 0 / 0.05)',
                         borderWidth: 1.5,
                         fill: true,
                         tension: 0.4,
@@ -369,7 +439,7 @@
                     plugins: { legend: false },
                     scales: {
                         x: { grid: { display: false }, ticks: { color: '#555' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#555' } }
+                        y: { grid: { color: 'oklch(1 0 0 / 0.04)' }, ticks: { color: '#555' } }
                     }
                 }
             });
@@ -387,7 +457,7 @@
                 const hwid = u.hwid ? `<span class="blur-data" onclick="copy('${u.hwid}')">${u.hwid}</span>` : '<span style="color:#555">Nenhum</span>';
                 const link = u.discord_id ? `https://discord.com/users/${u.discord_id}` : '#';
                 return `<tr>
-                    <td><a href="${link}" target="_blank"><div class="avatar-container"><img src="${avatar}" class="user-avatar"></div></a></td>
+                    <td><a href="${link}" target="_blank"><img src="${avatar}" class="user-avatar"></a></td>
                     <td><div style="font-weight:600;color:#fff">${u.username}</div><div style="font-size:11px;color:#666">${u.discord_id||'Sem Discord'}</div></td>
                     <td><span class="blur-data" onclick="copy('${u.license_key}')">${u.license_key}</span></td>
                     <td>${hwid}</td>
@@ -395,9 +465,9 @@
                     <td>${u.expiry_date} <button class="btn-sm btn-primary" onclick="openAddDays(${u.id})" style="margin-left:4px;padding:2px 6px">+</button></td>
                     <td>${status}</td>
                     <td style="text-align:right">
-                        <button class="btn-icon danger" onclick="openConfirmAction('Banir/Desbanir','Alterar status do usuário?',()=>act(${u.id},'${u.is_banned?'unban':'ban'}'))"><i class="fas fa-ban"></i></button>
-                        <button class="btn-icon" onclick="openConfirmAction('Resetar HWID','Resetar o HWID?',()=>act(${u.id},'reset'))"><i class="fas fa-microchip"></i></button>
-                        <button class="btn-icon" onclick="openConfirmAction('Deletar','Remover permanentemente?',()=>act(${u.id},'delete'))"><i class="fas fa-trash"></i></button>
+                        <button class="btn-icon danger" onclick="openConfirmAction('Banir/Desbanir','Alterar status do usuário?',()=>act(${u.id},'${u.is_banned?'unban':'ban'}'))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>
+                        <button class="btn-icon" onclick="openConfirmAction('Resetar HWID','Resetar o HWID?',()=>act(${u.id},'reset'))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+                        <button class="btn-icon" onclick="openConfirmAction('Deletar','Remover permanentemente?',()=>act(${u.id},'delete'))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                     </td>
                 </tr>`;
             }).join('');
@@ -437,7 +507,7 @@
         async function loadFiles() {
             const f = await (await fetch('/api/downloads')).json();
             document.getElementById('tb-files').innerHTML = f.map(x =>
-                `<tr><td style="color:#fff;font-weight:600">${x.name}</td><td style="color:var(--text-muted)">${x.url}</td><td>${x.version}</td><td style="text-align:right"><button class="btn-icon danger" onclick="openConfirmAction('Deletar','Remover download?',()=>delFile(${x.id}))"><i class="fas fa-trash"></i></button></td></tr>`
+                `<tr><td style="color:#fff;font-weight:600">${x.name}</td><td style="color:var(--text-muted)">${x.url}</td><td>${x.version}</td><td style="text-align:right"><button class="btn-icon danger" onclick="openConfirmAction('Deletar','Remover download?',()=>delFile(${x.id}))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`
             ).join('');
         }
 
@@ -573,7 +643,7 @@
             const isStaff = u.role === 'owner' || u.role === 'admin';
             const badge = document.getElementById('modal-p-role');
             badge.textContent = u.role ? u.role.toUpperCase() : 'CLIENTE';
-            badge.style.background = isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+            badge.style.background = isStaff ? 'oklch(1 0 0 / 0.1)' : 'oklch(1 0 0 / 0.04)';
             badge.style.color = isStaff ? '#fff' : '#888';
             document.getElementById('modal-p-discord').textContent = u.discord_id || 'Não vinculado';
             document.getElementById('modal-p-created').textContent = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '---';
@@ -595,10 +665,10 @@
                 container.innerHTML = users.map(u => {
                     const isStaff = u.role === 'owner' || u.role === 'admin';
                     return `
-                        <div onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:center;transition:0.3s;cursor:pointer">
+                        <div onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="background:oklch(1 0 0 / 0.02);border:1px solid var(--border);padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:center;transition:0.3s;cursor:pointer">
                             <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:52px;height:52px;border-radius:50%;margin-bottom:12px;border:2px solid transparent;object-fit:cover;">
                             <div style="font-weight:600;color:#fff;">${u.username || 'Usuário'}</div>
-                            <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;padding:3px 10px;border-radius:20px;margin-top:6px;background:${isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)'};color:${isStaff ? '#fff' : '#888'}">${(u.role || 'cliente').toUpperCase()}</div>
+                            <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;padding:3px 10px;border-radius:20px;margin-top:6px;background:${isStaff ? 'oklch(1 0 0 / 0.1)' : 'oklch(1 0 0 / 0.04)'};color:${isStaff ? '#fff' : '#888'}">${(u.role || 'cliente').toUpperCase()}</div>
                         </div>`;
                 }).join('');
             } catch (e) {
@@ -610,9 +680,12 @@
             const c = document.getElementById('notification-area');
             const e = document.createElement('div');
             e.className = 'toast ' + type;
-            e.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-times-circle') + '"></i> ' + msg;
+            const icon = type === 'success'
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+            e.innerHTML = icon + ' ' + msg;
             c.appendChild(e);
-            setTimeout(() => { e.style.transition = '0.4s'; e.style.opacity = '0'; e.style.transform = 'translateX(40px)'; setTimeout(() => e.remove(), 400); }, 3000);
+            setTimeout(() => { e.style.opacity = '0'; e.style.transform = 'translateX(40px)'; setTimeout(() => e.remove(), 400); }, 3000);
         }
 
         async function loadAdmins() {
@@ -622,9 +695,9 @@
                 `<tr>
                     <td style="color:var(--text-muted)">${a.id}</td>
                     <td style="color:#fff;font-weight:600">${a.username}</td>
-                    <td><span class="badge ${a.role === 'owner' ? 'badge-success' : 'badge'}" style="${a.role !== 'owner' ? 'background:rgba(255,255,255,0.06);color:var(--text-muted)' : ''}">${(a.role || 'admin').toUpperCase()}</span></td>
+                    <td><span class="badge ${a.role === 'owner' ? 'badge-success' : 'badge'}" style="${a.role !== 'owner' ? 'background:oklch(1 0 0 / 0.06);color:var(--text-muted)' : ''}">${(a.role || 'admin').toUpperCase()}</span></td>
                     <td style="text-align:right">
-                        ${a.role !== 'owner' ? `<button class="btn-icon danger" onclick="openConfirmAction('Deletar Admin','Remover ${a.username}?',()=>deleteAdmin(${a.id}))"><i class="fas fa-trash"></i></button>` : '<span style="color:#555;font-size:11px;">---</span>'}
+                        ${a.role !== 'owner' ? `<button class="btn-icon danger" onclick="openConfirmAction('Deletar Admin','Remover ${a.username}?',()=>deleteAdmin(${a.id}))"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>` : '<span style="color:#555;font-size:11px;">---</span>'}
                     </td>
                 </tr>`
             ).join('');
