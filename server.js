@@ -11,7 +11,6 @@ try { sodium = require('sodium-native'); } catch (e) { sodium = require('libsodi
 
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, VoiceConnectionStatus, AudioPlayerStatus, StreamType } = require('@discordjs/voice');
-const Stripe = require('stripe');
 require('dotenv').config();
 
 const SECRET_KEY_XOR = 'hKkEySsEcReT2024XoR';
@@ -140,16 +139,6 @@ async function getBotConfig() {
     if (!config.bot_token) config.bot_token = process.env.DISCORD_BOT_TOKEN;
     if (!config.client_id) config.client_id = process.env.DISCORD_CLIENT_ID;
     return config;
-}
-
-let _stripe = null;
-async function getStripe() {
-    if (_stripe) return _stripe;
-    const config = await getBotConfig();
-    const key = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
-    if (!key) return null;
-    _stripe = Stripe(key);
-    return _stripe;
 }
 
 async function sendWebhook(text) {
@@ -355,140 +344,32 @@ client.on('interactionCreate', async interaction => {
 
 app.use(checkBannedIp);
 
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    const config = await getBotConfig();
-    const endpointSecret = config.stripe_webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
-    const stripeKey = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
+app.post('/api/gerar-key', async (req, res) => {
+    const { days } = req.body;
 
-    if (!stripeKey) return res.status(500).send('Stripe not configured');
-
-    let event;
-    if (endpointSecret) {
-        const sig = req.headers['stripe-signature'];
-        try {
-            event = Stripe(stripeKey).webhooks.constructEvent(req.body, sig, endpointSecret);
-        } catch (e) {
-            return res.status(400).send('Invalid signature');
-        }
-    } else {
-        try {
-            event = JSON.parse(req.body.toString());
-        } catch (e) {
-            return res.status(400).send('Invalid payload');
-        }
+    const validDays = [1, 7, 15, 30];
+    if (!validDays.includes(days)) {
+        return res.json({ success: false, error: 'Duração inválida' });
     }
 
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const discordId = session.metadata.discord_id;
-        const username = session.metadata.username;
-        const days = parseInt(session.metadata.days) || 30;
+    const key = "HK-" + crypto.randomBytes(4).toString('hex').toUpperCase();
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    const expiryDate = date.toISOString().split('T')[0];
 
-        try {
-            const key = "HK-" + crypto.randomBytes(4).toString('hex').toUpperCase();
-            const date = new Date();
-            date.setDate(date.getDate() + days);
-            const expiryDate = date.toISOString().split('T')[0];
+    await dbRun(
+        "INSERT INTO users (license_key, expiry_date) VALUES (?, ?)",
+        [key, expiryDate]
+    );
 
-            if (discordId) {
-                await dbRun(
-                    "INSERT INTO users (license_key, expiry_date, discord_id, username) VALUES (?, ?, ?, ?)",
-                    [key, expiryDate, discordId, username || 'User']
-                );
-            } else {
-                await dbRun(
-                    "INSERT INTO users (license_key, expiry_date) VALUES (?, ?)",
-                    [key, expiryDate]
-                );
-            }
+    await dbRun(
+        "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
+        ['KEY_GENERATED', `Key ${key} gerada (${days}d)`, req.ip]
+    );
 
-            await dbRun(
-                "INSERT INTO settings (key, value) VALUES (?, ?)",
-                ['stripe_key_' + session.id, key]
-            );
+    sendWebhook(`💰 **Nova venda!**\nKey: \`${key}\`\nDuração: ${days} dias\nExpira: ${expiryDate}`);
 
-            await dbRun(
-                "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
-                ['STRIPE_PAYMENT', `Key ${key} gerada (${days}d) - ${session.id}`, 'STRIPE']
-            );
-
-            sendWebhook(`🤑 **Nova compra!**\nKey: \`${key}\`\nDuração: ${days} dias\nExpira: ${expiryDate}\nDiscord: ${discordId ? `<@${discordId}>` : 'Não vinculado'}`);
-
-            if (discordId) {
-                const user = await client.users.fetch(discordId).catch(() => null);
-                if (user) {
-                    const embed = new EmbedBuilder()
-                        .setColor(0x22c55e)
-                        .setTitle('✅ Pagamento Confirmado')
-                        .setDescription('Sua licença foi gerada com sucesso!')
-                        .addFields(
-                            { name: 'Key', value: `||${key}||`, inline: true },
-                            { name: 'Duração', value: `${days} dias`, inline: true },
-                            { name: 'Expira em', value: expiryDate, inline: true },
-                            { name: 'Ativar', value: 'Use `/ativar key` para vincular ao Discord' }
-                        );
-                    await user.send({ embeds: [embed] }).catch(() => {});
-                }
-            }
-        } catch (e) {
-            console.error('Stripe webhook error:', e);
-        }
-    }
-
-    res.json({ received: true });
-});
-
-app.get('/api/get-key/:sessionId', async (req, res) => {
-    const row = await dbGet("SELECT value FROM settings WHERE key = ?", ['stripe_key_' + req.params.sessionId]);
-    if (row) {
-        res.json({ key: row.value });
-    } else {
-        res.json({ key: null });
-    }
-});
-
-app.post('/api/create-checkout', async (req, res) => {
-    const config = await getBotConfig();
-    const stripeKey = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
-    const days = req.body.days;
-
-    const priceMap = {
-        1: config.stripe_price_1,
-        7: config.stripe_price_7,
-        30: config.stripe_price_30,
-        60: config.stripe_price_60,
-        120: config.stripe_price_120
-    };
-
-    if (!stripeKey) {
-        return res.json({ success: false, error: 'Pagamentos não configurados.' });
-    }
-
-    const priceId = priceMap[days];
-    if (!priceId) {
-        return res.json({ success: false, error: 'Preço não configurado para esta duração.' });
-    }
-
-    try {
-        const s = Stripe(stripeKey);
-        const session = await s.checkout.sessions.create({
-            mode: 'payment',
-            line_items: [{ price: priceId, quantity: 1 }],
-            metadata: { days: String(days) },
-            success_url: `${req.protocol}://${req.get('host')}/sucesso.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.protocol}://${req.get('host')}/comprar.html`
-        });
-
-        await dbRun(
-            "INSERT INTO logs (action, details, ip_address) VALUES (?, ?, ?)",
-            ['STRIPE_CHECKOUT', `Compra iniciada: ${days}d - ${session.id}`, req.ip]
-        );
-
-        res.json({ success: true, url: session.url });
-    } catch (e) {
-        console.error('Stripe error:', e);
-        res.json({ success: false, error: 'Erro ao criar pagamento.' });
-    }
+    res.json({ success: true, key });
 });
 
 app.use(express.json());
@@ -506,7 +387,7 @@ app.use(session({
 
 const checkMaintenance = async (req, res, next) => {
     if (req.session && req.session.isAdmin && req.session.adminRole === 'owner') return next();
-    if (req.path === '/api/maintenance-status' || req.path === '/api/emergency-unban' || req.path === '/api/stripe/webhook') return next();
+    if (req.path === '/api/maintenance-status' || req.path === '/api/emergency-unban') return next();
     if (req.path.startsWith('/auth/')) return next();
     try {
         const row = await dbGet("SELECT value FROM settings WHERE key = 'maintenance'");

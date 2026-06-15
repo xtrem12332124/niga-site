@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KALI MODS | Pagamento Confirmado</title>
+    <title>KALI MODS | Key Gerada</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -35,7 +35,7 @@
             margin: 0 auto 16px;
         }
         .icon svg { color: #22c55e; }
-        h1 { font-size: 20px; font-weight: 600; color: #fff; }
+        h1 { font-size: 20px; font-weight: 600; }
         p { font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 8px; line-height: 1.6; }
         .key-box {
             background: rgba(255,255,255,0.02);
@@ -68,7 +68,6 @@
         .back { margin-top: 20px; }
         .back a { font-size: 11px; color: rgba(255,255,255,0.15); text-decoration: none; }
         .back a:hover { color: rgba(255,255,255,0.5); }
-        .loading { font-size: 13px; color: rgba(255,255,255,0.2); margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -76,38 +75,24 @@
         <div class="icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
-        <h1>Pagamento Confirmado!</h1>
-        <p>Sua licença foi gerada. Copie a key abaixo e use no Discord com <strong>/ativar</strong></p>
+        <h1>Key Gerada!</h1>
+        <p>Acesse o Discord e use o comando <strong>/mykey</strong> para ver o status</p>
         <div class="key-box" id="key-display">---</div>
         <button class="copy-btn" id="copy-btn" onclick="copyKey()">Copiar Key</button>
         <div class="back"><a href="/">← Voltar ao login</a></div>
     </div>
 
     <script>
-        async function loadKey() {
-            const params = new URLSearchParams(window.location.search);
-            const sessionId = params.get('session_id');
-            if (!sessionId) {
-                document.getElementById('key-display').textContent = 'Sessão não encontrada';
-                return;
-            }
-            try {
-                const res = await fetch('/api/get-key/' + sessionId);
-                const data = await res.json();
-                if (data.key) {
-                    document.getElementById('key-display').textContent = data.key;
-                } else {
-                    document.getElementById('key-display').textContent = 'Aguarde, processando pagamento...';
-                    setTimeout(loadKey, 2000);
-                }
-            } catch (e) {
-                document.getElementById('key-display').textContent = 'Erro ao carregar key';
-            }
+        const key = sessionStorage.getItem('generated_key');
+        if (key) {
+            document.getElementById('key-display').textContent = key;
+        } else {
+            document.getElementById('key-display').textContent = 'Nenhuma key disponível';
         }
 
         async function copyKey() {
             const key = document.getElementById('key-display').textContent;
-            if (!key || key === '---' || key === 'Aguarde, processando pagamento...') return;
+            if (!key || key === '---') return;
             try {
                 await navigator.clipboard.writeText(key);
                 const btn = document.getElementById('copy-btn');
@@ -116,8 +101,6 @@
                 setTimeout(() => { btn.textContent = 'Copiar Key'; btn.classList.remove('copied'); }, 2000);
             } catch {}
         }
-
-        loadKey();
     </script>
 </body>
 </html>

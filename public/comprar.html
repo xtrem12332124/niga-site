@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KALI MODS | Comprar</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -19,36 +19,18 @@
             justify-content: center;
             padding: 40px 20px;
         }
-        .brand {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-        .brand-line {
-            width: 24px; height: 1px;
-            background: rgba(255,255,255,0.15);
-            margin: 0 auto 20px;
-        }
-        .brand h1 {
-            font-size: 28px;
-            font-weight: 300;
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            color: #fff;
-        }
+        .brand { text-align: center; margin-bottom: 48px; }
+        .brand-line { width: 24px; height: 1px; background: rgba(255,255,255,0.15); margin: 0 auto 20px; }
+        .brand h1 { font-size: 28px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; color: #fff; }
         .brand h1 span { font-weight: 600; }
-        .brand p {
-            font-size: 11px;
-            color: rgba(255,255,255,0.2);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-top: 12px;
-        }
+        .brand p { font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 3px; text-transform: uppercase; margin-top: 12px; }
+
         .plans {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
             width: 100%;
-            max-width: 1000px;
+            max-width: 900px;
         }
         .plan {
             background: rgba(255,255,255,0.02);
@@ -61,28 +43,11 @@
             flex-direction: column;
             align-items: center;
         }
-        .plan:hover {
-            border-color: rgba(99,102,241,0.2);
-            background: rgba(99,102,241,0.03);
-        }
-        .plan .days {
-            font-size: 32px;
-            font-weight: 600;
-            color: #fff;
-        }
-        .plan .label {
-            font-size: 11px;
-            color: rgba(255,255,255,0.25);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
-        .plan .price {
-            font-size: 15px;
-            font-weight: 500;
-            color: rgba(255,255,255,0.5);
-            margin: 16px 0 20px;
-        }
+        .plan:hover { border-color: rgba(99,102,241,0.2); background: rgba(99,102,241,0.03); }
+        .plan .days { font-size: 32px; font-weight: 600; color: #fff; }
+        .plan .label { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+        .plan .price { font-size: 20px; font-weight: 500; color: #fff; margin: 12px 0 8px; }
+        .plan .price span { font-size: 12px; color: rgba(255,255,255,0.25); font-weight: 400; }
         .plan .btn {
             width: 100%;
             padding: 12px;
@@ -98,43 +63,74 @@
             cursor: pointer;
             transition: 0.3s;
         }
-        .plan .btn:hover {
-            background: #e8e8e8;
-            transform: translateY(-1px);
+        .plan .btn:hover { background: #e8e8e8; transform: translateY(-1px); }
+
+        .overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(5,5,8,0.92);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
         }
-        .plan .btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none;
+        .overlay.show { display: flex; }
+        .overlay-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 20px;
+            padding: 36px 32px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
         }
-        .back {
-            margin-top: 40px;
-        }
-        .back a {
-            font-size: 11px;
-            color: rgba(255,255,255,0.15);
-            text-decoration: none;
-            letter-spacing: 1px;
-            transition: 0.2s;
-        }
-        .back a:hover { color: rgba(255,255,255,0.5); }
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.2);
-            color: #ef4444;
-            padding: 12px 20px;
+        .overlay-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .overlay-card .sub { font-size: 12px; color: rgba(255,255,255,0.25); margin-bottom: 20px; }
+        .overlay-card img.qr { width: 200px; height: 200px; border-radius: 12px; margin-bottom: 16px; }
+        .overlay-card .pay-link {
+            display: block;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 10px;
-            font-size: 12px;
-            font-weight: 500;
-            opacity: 0;
-            transition: 0.4s;
-            pointer-events: none;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            word-break: break-all;
+            margin-bottom: 20px;
+            text-decoration: none;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .overlay-card .pay-link:hover { color: #fff; border-color: rgba(255,255,255,0.1); }
+        .overlay-card .confirm-btn {
+            width: 100%;
+            padding: 14px;
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .overlay-card .confirm-btn:hover { background: #16a34a; }
+        .overlay-card .close-btn {
+            margin-top: 12px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.15);
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .overlay-card .close-btn:hover { color: rgba(255,255,255,0.5); }
+
+        .back { margin-top: 40px; }
+        .back a { font-size: 11px; color: rgba(255,255,255,0.15); text-decoration: none; }
+        .back a:hover { color: rgba(255,255,255,0.5); }
+
         @media (max-width: 600px) {
             .plans { grid-template-columns: 1fr 1fr; }
             .brand h1 { font-size: 22px; letter-spacing: 6px; }
@@ -151,61 +147,82 @@
     <div class="plans" id="plans"></div>
 
     <div class="back"><a href="/">← Voltar ao login</a></div>
-    <div class="toast" id="toast"></div>
+
+    <div class="overlay" id="overlay">
+        <div class="overlay-card">
+            <h2 id="pay-title">Pagamento</h2>
+            <div class="sub" id="pay-sub">Escaneie o QR Code com sua carteira Liquid</div>
+            <img class="qr" id="pay-qr" src="" alt="QR Code">
+            <a class="pay-link" id="pay-link" href="#" target="_blank">Abrir na carteira</a>
+            <button class="confirm-btn" onclick="confirmPayment()">Já paguei! Gerar minha key</button>
+            <button class="close-btn" onclick="closeOverlay()">Voltar</button>
+        </div>
+    </div>
 
     <script>
         const products = [
-            { days: 1, label: '1 Dia' },
-            { days: 7, label: '7 Dias' },
-            { days: 30, label: '30 Dias' },
-            { days: 60, label: '60 Dias' },
-            { days: 120, label: '120 Dias' }
+            { days: 1, label: '1 Dia', price: 7, liquid: 'liquidnetwork:lq1qqdv8nq5ljuhyh96saktgx7y2gug5xhpmfq5pjzjdv9fefta8zh33z67hmp5p769sff3ln2qfneylmy9u6p9fcjlpkns5arwlm?amount=0.00002730' },
+            { days: 7, label: '7 Dias', price: 20, liquid: 'liquidnetwork:lq1qqdv8nq5ljuhyh96saktgx7y2gug5xhpmfq5pjzjdv9fefta8zh33z67hmp5p769sff3ln2qfneylmy9u6p9fcjlpkns5arwlm?amount=0.00007800' },
+            { days: 15, label: '15 Dias', price: 40, liquid: 'liquidnetwork:lq1qqdv8nq5ljuhyh96saktgx7y2gug5xhpmfq5pjzjdv9fefta8zh33z67hmp5p769sff3ln2qfneylmy9u6p9fcjlpkns5arwlm?amount=0.00015600' },
+            { days: 30, label: '30 Dias', price: 80, liquid: 'liquidnetwork:lq1qqdv8nq5ljuhyh96saktgx7y2gug5xhpmfq5pjzjdv9fefta8zh33z67hmp5p769sff3ln2qfneylmy9u6p9fcjlpkns5arwlm?amount=0.00031200' }
         ];
 
-        const plansEl = document.getElementById('plans');
-        const toastEl = document.getElementById('toast');
+        let selectedDays = null;
 
+        const plansEl = document.getElementById('plans');
         products.forEach(p => {
             const div = document.createElement('div');
             div.className = 'plan';
             div.innerHTML = `
                 <div class="days">${p.days}</div>
                 <div class="label">${p.label}</div>
-                <div class="price" id="price-${p.days}">---</div>
-                <button class="btn" onclick="buy(${p.days})" id="btn-${p.days}">Comprar</button>
+                <div class="price">R$${p.price} <span>| Pix/Liquid</span></div>
+                <button class="btn" onclick="openPayment(${p.days})">Comprar</button>
             `;
             plansEl.appendChild(div);
         });
 
-        async function buy(days) {
-            const btn = document.getElementById('btn-' + days);
-            btn.disabled = true;
-            btn.textContent = 'Aguarde...';
-            try {
-                const res = await fetch('/api/create-checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ days })
-                });
-                const data = await res.json();
-                if (data.url) {
-                    location.href = data.url;
-                } else {
-                    showToast(data.error || 'Erro ao criar pagamento');
-                    btn.disabled = false;
-                    btn.textContent = 'Comprar';
-                }
-            } catch (e) {
-                showToast('Erro de conexão');
-                btn.disabled = false;
-                btn.textContent = 'Comprar';
-            }
+        function openPayment(days) {
+            const p = products.find(x => x.days === days);
+            if (!p) return;
+            selectedDays = days;
+            document.getElementById('pay-title').textContent = `Pagamento - ${p.label}`;
+            document.getElementById('pay-sub').textContent = `Valor: R$${p.price} · Escaneie o QR Code`;
+            document.getElementById('pay-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(p.liquid)}`;
+            document.getElementById('pay-link').href = p.liquid;
+            document.getElementById('overlay').classList.add('show');
         }
 
-        function showToast(msg) {
-            toastEl.textContent = msg;
-            toastEl.classList.add('show');
-            setTimeout(() => toastEl.classList.remove('show'), 4000);
+        function closeOverlay() {
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        async function confirmPayment() {
+            if (!selectedDays) return;
+            const btn = document.querySelector('.confirm-btn');
+            btn.disabled = true;
+            btn.textContent = 'Gerando...';
+            try {
+                const res = await fetch('/api/gerar-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days: selectedDays })
+                });
+                const data = await res.json();
+                if (data.key) {
+                    sessionStorage.setItem('generated_key', data.key);
+                    sessionStorage.setItem('generated_days', selectedDays);
+                    location.href = '/sucesso.html';
+                } else {
+                    alert('Erro ao gerar key: ' + (data.error || 'Erro desconhecido'));
+                    btn.disabled = false;
+                    btn.textContent = 'Já paguei! Gerar minha key';
+                }
+            } catch (e) {
+                alert('Erro de conexão');
+                btn.disabled = false;
+                btn.textContent = 'Já paguei! Gerar minha key';
+            }
         }
     </script>
 </body>
