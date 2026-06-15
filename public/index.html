@@ -261,6 +261,28 @@
         }
         .notification-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
 
+        .loading-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(5,5,8,0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            display: none;
+            flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-ball {
+            width: 32px; height: 32px;
+            border: 2px solid rgba(255,255,255,0.04);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: loadSpin 0.8s linear infinite;
+        }
+        @keyframes loadSpin { to { transform: rotate(360deg); } }
+        .loading-overlay p {
+            font-size: 11px; color: rgba(255,255,255,0.2);
+            letter-spacing: 3px; text-transform: uppercase; font-weight: 400;
+        }
+
         @media (max-width: 420px) {
             .card { width: calc(100% - 32px); padding: 28px 20px; }
             .brand h1 { font-size: 22px; letter-spacing: 6px; }
@@ -277,6 +299,11 @@
     <div class="noise-fixed"></div>
 
     <div class="notifications-container" id="notifications-container"></div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-ball"></div>
+        <p>Autenticando...</p>
+    </div>
 
     <div class="login-wrap">
         <div class="brand">
@@ -410,12 +437,21 @@
             }
         }
 
+        function showLoading(text = 'Autenticando...') {
+            document.getElementById('loading-overlay').querySelector('p').innerText = text;
+            document.getElementById('loading-overlay').classList.add('show');
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('show');
+        }
+
         async function authDiscord() {
             const key = document.getElementById('key').value.trim();
             if (!key) {
                 notificationSystem.error('Key necessária', 'Digite sua licença para continuar');
                 return;
             }
+            showLoading('Redirecionando para Discord...');
             setLoading('client-btn', true);
             try {
                 const res = await fetch('/auth/discord/login', {
@@ -427,10 +463,12 @@
                 if (d.success && d.redirect) {
                     location.href = d.redirect;
                 } else {
+                    hideLoading();
                     notificationSystem.error('Falha na Autenticação', d.error || 'Erro ao autenticar');
                     setLoading('client-btn', false);
                 }
             } catch (e) {
+                hideLoading();
                 notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
                 setLoading('client-btn', false);
             }
@@ -484,6 +522,7 @@
                 const d = await res.json();
 
                 if (d.phone_required) {
+                    hideLoading();
                     adminStep = 'phone';
                     document.getElementById('phone-group').style.display = 'block';
                     document.getElementById('phone').focus();
@@ -493,12 +532,14 @@
                 }
 
                 if (d.success) {
+                    showLoading(type === 'admin' ? 'Redirecionando para Discord...' : 'Autenticando...');
                     notificationSystem.success('Autenticação Bem-sucedida', 'Redirecionando...', 2000);
                     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#050508" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
                     btn.style.background = '#22c55e';
                     btn.style.color = '#050508';
                     setTimeout(() => { location.href = d.redirect; }, 500);
                 } else {
+                    hideLoading();
                     const err = d.msg || d.error || 'Acesso Negado.';
                     notificationSystem.error('Falha na Autenticação', err, 4000);
                     msg.innerHTML = err;
@@ -506,6 +547,7 @@
                     resetBtn(btn);
                 }
             } catch (e) {
+                hideLoading();
                 notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
                 msg.innerHTML = 'Erro de conexão.';
                 msg.className = 'error';
