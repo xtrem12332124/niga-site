@@ -21,6 +21,7 @@ app.set('trust proxy', 1);
 const checkHost = (req, res, next) => next();
 const requireAdmin = (req, res, next) => (req.session && req.session.isAdmin) ? next() : res.status(403).json({ success: false, error: 'Acesso Negado' });
 const requireClient = (req, res, next) => (req.session && (req.session.isClient || req.session.isAdmin)) ? next() : res.status(401).json({ success: false, error: 'Login Necessário' });
+const requireOwner = (req, res, next) => (req.session && req.session.isAdmin && req.session.adminRole === 'owner') ? next() : res.status(403).json({ success: false, error: 'Apenas o dono pode fazer isso' });
 
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
@@ -813,7 +814,7 @@ app.post('/api/admin/clear-logs', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/create-admin', requireAdmin, async (req, res) => {
+app.post('/api/admin/create-admin', requireOwner, async (req, res) => {
     const { username, password, role } = req.body;
     
     await dbRun(
@@ -824,7 +825,7 @@ app.post('/api/admin/create-admin', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/delete-admin', requireAdmin, async (req, res) => {
+app.post('/api/admin/delete-admin', requireOwner, async (req, res) => {
     const { id } = req.body;
     
     await dbRun("DELETE FROM admins WHERE id = ?", [id]);
@@ -832,7 +833,7 @@ app.post('/api/admin/delete-admin', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/admin/admins', requireAdmin, async (req, res) => {
+app.get('/api/admin/admins', requireOwner, async (req, res) => {
     const admins = await dbAll("SELECT * FROM admins");
     res.json(admins);
 });

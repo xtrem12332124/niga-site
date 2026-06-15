@@ -125,9 +125,9 @@
         <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
         <div class="nav-item" onclick="nav('users', this)"><i class="fas fa-users"></i> Usuários</div>
         <div class="nav-item" onclick="nav('admins', this)" id="nav-admins" style="display:none;"><i class="fas fa-shield-halved"></i> Admins</div>
-        <div class="nav-item" onclick="nav('files', this)"><i class="fas fa-folder-open"></i> Downloads</div>
-        <div class="nav-item" onclick="nav('bot', this)"><i class="fab fa-discord"></i> Config Bot</div>
-        <div class="nav-item" onclick="nav('sys', this)"><i class="fas fa-cogs"></i> Sistema</div>
+        <div class="nav-item" onclick="nav('files', this)" id="nav-files"><i class="fas fa-folder-open"></i> Downloads</div>
+        <div class="nav-item" onclick="nav('bot', this)" id="nav-bot"><i class="fab fa-discord"></i> Config Bot</div>
+        <div class="nav-item" onclick="nav('sys', this)" id="nav-sys"><i class="fas fa-cogs"></i> Sistema</div>
         <div class="nav-item nav-logout" onclick="location.href='/auth/logout'"><i class="fas fa-sign-out-alt"></i> Sair</div>
     </div>
 
@@ -291,12 +291,19 @@
                     badge.innerText = 'ADMIN';
                     badge.style.background = 'rgba(255,255,255,0.06)';
                     badge.style.color = 'var(--text-muted)';
+                    document.getElementById('nav-files').style.display = 'none';
+                    document.getElementById('nav-bot').style.display = 'none';
+                    document.getElementById('nav-sys').style.display = 'none';
                 }
                 document.getElementById('sidebar-profile').style.display = 'block';
             } catch (e) {}
         }
 
         function nav(id, el) {
+            if (myRole !== 'owner' && (id === 'admins' || id === 'files' || id === 'bot' || id === 'sys')) {
+                showToast('error', 'Apenas o dono pode acessar isso');
+                return;
+            }
             document.querySelectorAll('.view-section').forEach(x => x.classList.remove('active'));
             document.getElementById('view-' + id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
