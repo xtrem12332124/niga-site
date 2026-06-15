@@ -46,7 +46,9 @@ async function initSystem() {
     return new Promise(async (resolve) => {
         db.serialize(() => {
             db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, license_key TEXT UNIQUE, discord_id TEXT, username TEXT DEFAULT 'User', avatar_url TEXT DEFAULT 'https://cdn.discordapp.com/embed/avatars/0.png', hwid TEXT, is_banned INTEGER DEFAULT 0, expiry_date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login DATETIME, ip_address TEXT)`);
-            db.run(`CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT DEFAULT 'admin')`);
+            db.run(`CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT DEFAULT 'admin', discord_id TEXT, avatar_url TEXT DEFAULT 'https://cdn.discordapp.com/embed/avatars/1.png')`);
+            db.run(`ALTER TABLE admins ADD COLUMN discord_id TEXT`, () => {});
+            db.run(`ALTER TABLE admins ADD COLUMN avatar_url TEXT`, () => {});
             db.run(`CREATE TABLE IF NOT EXISTS downloads (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT, version TEXT, description TEXT, icon TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT, details TEXT, ip_address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
             db.run(`CREATE TABLE IF NOT EXISTS settings (key TEXT UNIQUE, value TEXT)`);
@@ -463,6 +465,7 @@ app.get('/auth/discord/callback', async (req, res) => {
         const discordUser = await userResponse.json();
 
         if (tempAdmin) {
+            await dbRun("UPDATE admins SET discord_id = ?, avatar_url = ? WHERE username = ? AND role = ?", [discordUser.id, `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`, tempAdmin.username, tempAdmin.role]);
             req.session.isAdmin = true;
             req.session.adminRole = tempAdmin.role;
             req.session.adminName = tempAdmin.username;
@@ -543,15 +546,15 @@ app.get('/api/client/settings', requireClient, async (req, res) => {
 app.get('/api/client/users', requireClient, async (req, res) => {
     try {
         const users = await dbAll("SELECT id, username, avatar_url, discord_id, created_at FROM users ORDER BY id DESC LIMIT 50");
-        const admins = await dbAll("SELECT username, role FROM admins");
+        const admins = await dbAll("SELECT username, role, discord_id, avatar_url FROM admins");
         
         const all = [
             ...admins.map(a => ({ 
                 id: -1,
                 username: a.username, 
                 role: a.role || 'admin', 
-                avatar_url: 'https://cdn.discordapp.com/embed/avatars/1.png',
-                discord_id: null,
+                avatar_url: a.avatar_url || 'https://cdn.discordapp.com/embed/avatars/1.png',
+                discord_id: a.discord_id || null,
                 created_at: null
             })),
             ...users.map(u => ({ 
