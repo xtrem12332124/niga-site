@@ -760,6 +760,13 @@ app.post('/api/loader/auth', async (req, res) => {
     }
 });
 
+app.get('/api/emergency-unban', async (req, res) => {
+    const { token } = req.query;
+    if (!token || token !== 'hk_keys_secure_session') return res.status(401).send('Token invalido');
+    await dbRun("DELETE FROM settings WHERE key LIKE 'banned_ip_%'");
+    res.send('Todos os IPs foram desbanidos. Tente logar novamente.');
+});
+
 app.get('/api/admin/me', requireAdmin, (req, res) => {
     res.json({
         username: req.session.adminName,
