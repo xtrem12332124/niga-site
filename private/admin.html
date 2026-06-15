@@ -116,8 +116,15 @@
             <div class="sidebar-brand-icon"><i class="fas fa-key"></i></div>
             <div class="sidebar-brand-text">KALI MODS</div>
         </div>
+        <div id="sidebar-profile" style="padding:10px 12px;margin-bottom:16px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;display:none;">
+            <div style="font-size:14px;font-weight:600;color:#fff;" id="s-admin-name">---</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                <span id="s-admin-role-badge" style="padding:2px 8px;border-radius:10px;font-weight:600;"></span>
+            </div>
+        </div>
         <div class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
         <div class="nav-item" onclick="nav('users', this)"><i class="fas fa-users"></i> Usuários</div>
+        <div class="nav-item" onclick="nav('admins', this)" id="nav-admins" style="display:none;"><i class="fas fa-shield-halved"></i> Admins</div>
         <div class="nav-item" onclick="nav('files', this)"><i class="fas fa-folder-open"></i> Downloads</div>
         <div class="nav-item" onclick="nav('bot', this)"><i class="fab fa-discord"></i> Config Bot</div>
         <div class="nav-item" onclick="nav('sys', this)"><i class="fas fa-cogs"></i> Sistema</div>
@@ -234,6 +241,28 @@
                 </div>
             </div>
         </div>
+
+        <div id="view-admins" class="view-section">
+            <h1><i class="fas fa-shield-halved" style="opacity:0.6"></i> Gerenciar Admins</h1>
+            <div class="card">
+                <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Criar Novo Admin</div>
+                <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+                    <div style="flex:1;min-width:150px;"><label>Usuário</label><input id="new-admin-user" placeholder="Nome de usuário" style="margin-bottom:0;"></div>
+                    <div style="flex:1;min-width:150px;"><label>Senha</label><input type="password" id="new-admin-pass" placeholder="Senha" style="margin-bottom:0;"></div>
+                    <div style="width:120px;"><label>Cargo</label><select id="new-admin-role" style="margin-bottom:0;"><option value="admin">Admin</option><option value="owner">Dono</option></select></div>
+                    <button class="btn-primary" onclick="createAdmin()">+ Criar</button>
+                </div>
+            </div>
+            <div class="card">
+                <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Admins Cadastrados</div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>ID</th><th>Usuário</th><th>Cargo</th><th style="text-align:right">Ação</th></tr></thead>
+                        <tbody id="tb-admins"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="notification-area"></div>
@@ -243,6 +272,29 @@
 
     <script>
         let usersData = [], maint = false, chartInstance = null, currentUserId = null;
+        let myRole = 'admin';
+
+        async function loadAdminInfo() {
+            try {
+                const res = await fetch('/api/admin/me');
+                if (res.status === 403) return;
+                const data = await res.json();
+                myRole = data.role;
+                document.getElementById('s-admin-name').innerText = data.username;
+                const badge = document.getElementById('s-admin-role-badge');
+                if (data.role === 'owner') {
+                    badge.innerText = 'DONO';
+                    badge.style.background = 'rgba(255,255,255,0.12)';
+                    badge.style.color = '#fff';
+                    document.getElementById('nav-admins').style.display = 'flex';
+                } else {
+                    badge.innerText = 'ADMIN';
+                    badge.style.background = 'rgba(255,255,255,0.06)';
+                    badge.style.color = 'var(--text-muted)';
+                }
+                document.getElementById('sidebar-profile').style.display = 'block';
+            } catch (e) {}
+        }
 
         function nav(id, el) {
             document.querySelectorAll('.view-section').forEach(x => x.classList.remove('active'));
@@ -251,6 +303,7 @@
             el.classList.add('active');
             if (id === 'dash') loadDash();
             if (id === 'users') loadUsers();
+            if (id === 'admins') loadAdmins();
             if (id === 'files') loadFiles();
             if (id === 'bot') loadBotSettings();
             if (id === 'sys') loadSys();
@@ -501,6 +554,47 @@
             setTimeout(() => { e.style.transition = '0.4s'; e.style.opacity = '0'; e.style.transform = 'translateX(40px)'; setTimeout(() => e.remove(), 400); }, 3000);
         }
 
+        async function loadAdmins() {
+            const res = await fetch('/api/admin/admins');
+            const admins = await res.json();
+            document.getElementById('tb-admins').innerHTML = admins.map(a =>
+                `<tr>
+                    <td style="color:var(--text-muted)">${a.id}</td>
+                    <td style="color:#fff;font-weight:600">${a.username}</td>
+                    <td><span class="badge ${a.role === 'owner' ? 'badge-success' : 'badge'}" style="${a.role !== 'owner' ? 'background:rgba(255,255,255,0.06);color:var(--text-muted)' : ''}">${(a.role || 'admin').toUpperCase()}</span></td>
+                    <td style="text-align:right">
+                        ${a.role !== 'owner' ? `<button class="btn-icon danger" onclick="openConfirmAction('Deletar Admin','Remover ${a.username}?',()=>deleteAdmin(${a.id}))"><i class="fas fa-trash"></i></button>` : '<span style="color:#555;font-size:11px;">---</span>'}
+                    </td>
+                </tr>`
+            ).join('');
+        }
+
+        async function createAdmin() {
+            const username = document.getElementById('new-admin-user').value.trim();
+            const password = document.getElementById('new-admin-pass').value.trim();
+            const role = document.getElementById('new-admin-role').value;
+            if (!username || !password) return showToast('error', 'Preencha usuário e senha');
+            const res = await (await fetch('/api/admin/create-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, role })
+            })).json();
+            if (res.success) {
+                showToast('success', `Admin "${username}" criado!`);
+                document.getElementById('new-admin-user').value = '';
+                document.getElementById('new-admin-pass').value = '';
+                loadAdmins();
+            }
+        }
+
+        async function deleteAdmin(id) {
+            await fetch('/api/admin/delete-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            showToast('success', 'Admin removido!');
+            closeModal('modal-confirm');
+            loadAdmins();
+        }
+
+        loadAdminInfo();
         loadDash();
     </script>
 </body>

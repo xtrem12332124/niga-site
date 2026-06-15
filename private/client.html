@@ -306,7 +306,7 @@
                 <div class="profile-status"></div>
             </div>
             <div class="profile-name" id="sb-name">Usuário</div>
-            <div class="profile-role">CLIENTE VIP</div>
+            <div class="profile-role" id="sb-role">CARREGANDO...</div>
         </div>
 
         <nav>
@@ -450,6 +450,7 @@
                 userData = await res.json();
 
                 document.getElementById('sb-name').innerText = userData.username;
+                document.getElementById('sb-role').innerText = 'CLIENTE VIP';
                 document.getElementById('sb-img').src = userData.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
                 document.getElementById('u-expiry').innerText = userData.expiry_date;
                 document.getElementById('u-key').innerText = userData.license_key;

@@ -452,6 +452,8 @@ app.post('/auth/admin/login', async (req, res) => {
 
     if (admin) {
         req.session.isAdmin = true;
+        req.session.adminRole = admin.role || 'admin';
+        req.session.adminName = admin.username;
         return res.json({ success: true, redirect: '/admin' });
     }
     
@@ -640,6 +642,13 @@ app.post('/api/loader/auth', async (req, res) => {
         }));
         res.send(errorResponse);
     }
+});
+
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+    res.json({
+        username: req.session.adminName,
+        role: req.session.adminRole
+    });
 });
 
 app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
