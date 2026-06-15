@@ -282,6 +282,13 @@
                     <i class="fas fa-lock"></i>
                 </div>
             </div>
+            <div class="input-group" id="phone-group" style="display:none;">
+                <label>Telefone (Verificação)</label>
+                <div class="input-wrap">
+                    <input type="tel" id="phone" placeholder="DDD + Número">
+                    <i class="fas fa-phone"></i>
+                </div>
+            </div>
             <button onclick="auth('admin')">
                 Painel Administrativo <i class="fas fa-arrow-right" style="margin-left:6px;font-size:12px"></i>
             </button>
@@ -332,6 +339,8 @@
         });
 
         function sw(t) {
+            adminStep = 'credentials';
+            document.getElementById('phone-group').style.display = 'none';
             document.getElementById('client-form').style.display = t === 'client' ? 'block' : 'none';
             document.getElementById('admin-form').style.display = t === 'admin' ? 'block' : 'none';
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
@@ -340,9 +349,21 @@
             document.getElementById('msg').style.display = 'none';
         }
 
+        let adminStep = 'credentials';
+
         async function auth(type) {
             const btn = event.target.closest('button');
             const orig = btn.innerHTML;
+
+            if (type === 'admin' && adminStep === 'phone') {
+                const phone = document.getElementById('phone').value.trim();
+                if (!phone) {
+                    document.getElementById('msg').innerHTML = '<i class="fas fa-exclamation-circle"></i> Informe o telefone de verificação';
+                    document.getElementById('msg').className = 'error';
+                    return;
+                }
+            }
+
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Autenticando...';
             btn.disabled = true;
 
@@ -352,7 +373,11 @@
 
             try {
                 const body = type === 'admin'
-                    ? { username: document.getElementById('user').value, password: document.getElementById('pass').value }
+                    ? {
+                        username: document.getElementById('user').value,
+                        password: document.getElementById('pass').value,
+                        phone: adminStep === 'phone' ? document.getElementById('phone').value.trim() : ''
+                    }
                     : { key: document.getElementById('key').value };
 
                 const res = await fetch('/auth/' + type + '/login', {
@@ -361,6 +386,15 @@
                     body: JSON.stringify(body)
                 });
                 const d = await res.json();
+
+                if (d.phone_required) {
+                    adminStep = 'phone';
+                    document.getElementById('phone-group').style.display = 'block';
+                    document.getElementById('phone').focus();
+                    notificationSystem.info('Verificação', 'Confirme seu telefone para continuar', 3000);
+                    resetBtn();
+                    return;
+                }
 
                 if (d.success) {
                     notificationSystem.success('Autenticação Bem-sucedida', 'Redirecionando...', 2000);

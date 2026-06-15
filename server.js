@@ -444,21 +444,35 @@ app.get('/api/client/users', requireClient, async (req, res) => {
 });
 
 app.post('/auth/admin/login', async (req, res) => {
-    const { username, password } = req.body;
+    let { username, password, phone } = req.body;
+    username = (username || '').toString().trim();
+    password = (password || '').toString();
+    phone = (phone || '').toString().trim();
     
     const admin = await dbGet(
         "SELECT * FROM admins WHERE username = ? AND password = ?",
         [username, password]
     );
 
-    if (admin) {
-        req.session.isAdmin = true;
-        req.session.adminRole = admin.role || 'admin';
-        req.session.adminName = admin.username;
-        return res.json({ success: true, redirect: '/admin' });
+    if (!admin) {
+        return res.json({ success: false, error: 'Credenciais inválidas' });
     }
-    
-    res.json({ success: false, error: 'Credenciais inválidas' });
+
+    const allowedPhones = (process.env.ALLOWED_PHONES || '17996787397,17996498097,17997053419').split(',').map(p => p.trim()).filter(Boolean);
+
+    if (admin.role === 'owner') {
+        if (!phone) {
+            return res.json({ phone_required: true });
+        }
+        if (!allowedPhones.includes(phone)) {
+            return res.json({ success: false, error: 'Número de telefone não autorizado' });
+        }
+    }
+
+    req.session.isAdmin = true;
+    req.session.adminRole = admin.role || 'admin';
+    req.session.adminName = admin.username;
+    return res.json({ success: true, redirect: '/admin' });
 });
 
 app.post('/auth/client/login', async (req, res) => {
