@@ -128,6 +128,7 @@
         <div class="nav-item" onclick="nav('files', this)" id="nav-files"><i class="fas fa-folder-open"></i> Downloads</div>
         <div class="nav-item" onclick="nav('bot', this)" id="nav-bot"><i class="fab fa-discord"></i> Config Bot</div>
         <div class="nav-item" onclick="nav('sys', this)" id="nav-sys"><i class="fas fa-cogs"></i> Sistema</div>
+        <div class="nav-item" onclick="nav('comunidade', this)"><i class="fas fa-users"></i> Comunidade</div>
         <div class="nav-item nav-logout" onclick="location.href='/auth/logout'"><i class="fas fa-sign-out-alt"></i> Sair</div>
     </div>
 
@@ -263,6 +264,12 @@
                 </div>
             </div>
         </div>
+
+        <div id="view-comunidade" class="view-section">
+            <h1><i class="fas fa-users" style="opacity:0.6"></i> Comunidade</h1>
+            <p style="color:var(--text-muted);margin-bottom:24px;">Usuários ativos na plataforma KALI MODS.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px" id="admin-community-list"></div>
+        </div>
     </div>
 
     <div id="notification-area"></div>
@@ -314,6 +321,7 @@
             if (id === 'files') loadFiles();
             if (id === 'bot') loadBotSettings();
             if (id === 'sys') loadSys();
+            if (id === 'comunidade') loadComunidade();
         }
 
         async function loadDash() {
@@ -550,6 +558,26 @@
             a.select();
             try { document.execCommand('copy'); showToast('success', 'Copiado!'); } catch (e) { showToast('error', 'Erro'); }
             document.body.removeChild(a);
+        }
+
+        async function loadComunidade() {
+            const container = document.getElementById('admin-community-list');
+            container.innerHTML = '<div style="color:#666;font-size:14px;">Carregando...</div>';
+            try {
+                const res = await fetch('/api/client/users');
+                const users = await res.json();
+                container.innerHTML = users.map(u => {
+                    const isStaff = u.role === 'owner' || u.role === 'admin';
+                    return `
+                        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:18px;border-radius:14px;display:flex;flex-direction:column;align-items:center;transition:0.3s;cursor:pointer">
+                            <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:52px;height:52px;border-radius:50%;margin-bottom:12px;border:2px solid transparent;object-fit:cover;">
+                            <div style="font-weight:600;color:#fff;">${u.username || 'Usuário'}</div>
+                            <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;padding:3px 10px;border-radius:20px;margin-top:6px;background:${isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)'};color:${isStaff ? '#fff' : '#888'}">${(u.role || 'cliente').toUpperCase()}</div>
+                        </div>`;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = '<div style="color:var(--danger);font-size:14px;">Erro ao carregar comunidade.</div>';
+            }
         }
 
         function showToast(type, msg) {
