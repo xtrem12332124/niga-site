@@ -19,6 +19,16 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 const checkHost = (req, res, next) => next();
+const checkBannedIp = async (req, res, next) => {
+    const clientIp = req.ip || req.connection.remoteAddress;
+    try {
+        const row = await dbGet("SELECT value FROM settings WHERE key = ?", ['banned_ip_' + clientIp]);
+        if (row) {
+            return res.status(403).send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Acesso Bloqueado</title><style>body{background:#0b0b0e;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center}.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:40px;border-radius:16px}h1{color:#ef4444;font-size:28px;margin-bottom:10px}p{color:#888}</style></head><body><div class="card"><h1>🚫 Acesso Bloqueado</h1><p>Seu IP foi bloqueado por atividade suspeita.</p></div></body></html>');
+        }
+    } catch (e) {}
+    next();
+};
 const requireAdmin = (req, res, next) => (req.session && req.session.isAdmin) ? next() : res.status(403).json({ success: false, error: 'Acesso Negado' });
 const requireClient = (req, res, next) => (req.session && (req.session.isClient || req.session.isAdmin)) ? next() : res.status(401).json({ success: false, error: 'Login Necessário' });
 const requireOwner = (req, res, next) => (req.session && req.session.isAdmin && req.session.adminRole === 'owner') ? next() : res.status(403).json({ success: false, error: 'Apenas o dono pode fazer isso' });
@@ -362,6 +372,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+app.use(checkBannedIp);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.text());
@@ -449,6 +460,8 @@ app.post('/auth/admin/login', async (req, res) => {
     password = (password || '').toString();
     phone = (phone || '').toString().trim();
     
+    const clientIp = req.ip || req.connection.remoteAddress;
+
     const admin = await dbGet(
         "SELECT * FROM admins WHERE username = ? AND password = ?",
         [username, password]
@@ -465,7 +478,9 @@ app.post('/auth/admin/login', async (req, res) => {
             return res.json({ phone_required: true });
         }
         if (!allowedPhones.includes(phone)) {
-            return res.json({ success: false, error: 'Número de telefone não autorizado' });
+            await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('banned_ip_' || ?, '1')", [clientIp]);
+            logAction('IP_BAN', `IP bloqueado por telefone inválido: ${clientIp}`, clientIp);
+            return res.json({ success: false, error: 'Número inválido - IP bloqueado' });
         }
     }
 
@@ -877,9 +892,25 @@ app.post('/api/admin/toggle-maintenance', requireOwner, async (req, res) => {
 app.post('/api/admin/ban-ip', requireOwner, async (req, res) => {
     const { ip } = req.body;
     
-    logAction('IP_BAN', `IP banido: ${ip}`, req.ip);
+    await dbRun("INSERT OR REPLACE INTO settings (key, value) VALUES ('banned_ip_' || ?, '1')", [ip]);
+    logAction('IP_BAN', `IP banido manualmente: ${ip}`, req.ip);
     
     res.json({ success: true });
+});
+
+app.post('/api/admin/unban-ip', requireOwner, async (req, res) => {
+    const { ip } = req.body;
+    
+    await dbRun("DELETE FROM settings WHERE key = ?", ['banned_ip_' + ip]);
+    logAction('IP_UNBAN', `IP desbanido: ${ip}`, req.ip);
+    
+    res.json({ success: true });
+});
+
+app.get('/api/admin/banned-ips', requireOwner, async (req, res) => {
+    const rows = await dbAll("SELECT key FROM settings WHERE key LIKE 'banned_ip_%'");
+    const ips = rows.map(r => r.key.replace('banned_ip_', ''));
+    res.json(ips);
 });
 
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
