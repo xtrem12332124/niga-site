@@ -386,6 +386,90 @@ app.use(session({
     cookie: { secure: false }
 }));
 
+// Discord OAuth2
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'http://localhost:8080/auth/discord/callback';
+
+app.post('/auth/discord/login', async (req, res) => {
+    const key = req.body.key ? req.body.key.trim().toUpperCase() : "";
+
+    const maintenance = await dbGet("SELECT value FROM settings WHERE key = 'maintenance'");
+    if (maintenance && maintenance.value === 'true') {
+        return res.json({ success: false, error: "Sistema em manutenção" });
+    }
+
+    const user = await dbGet("SELECT * FROM users WHERE license_key = ? AND is_banned = 0", [key]);
+    if (!user) {
+        return res.json({ success: false, error: 'Key inválida ou banida' });
+    }
+
+    req.session.tempKey = key;
+    req.session.tempUserId = user.id;
+
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+    res.json({ success: true, redirect: authUrl });
+});
+
+app.get('/auth/discord/callback', async (req, res) => {
+    const { code } = req.query;
+    if (!code) return res.redirect('/?error=no_code');
+
+    const tempKey = req.session.tempKey;
+    const tempUserId = req.session.tempUserId;
+    if (!tempKey || !tempUserId) return res.redirect('/?error=session_expired');
+
+    try {
+        const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                client_id: DISCORD_CLIENT_ID,
+                client_secret: DISCORD_CLIENT_SECRET,
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: DISCORD_REDIRECT_URI
+            })
+        });
+
+        const tokenData = await tokenResponse.json();
+        if (!tokenData.access_token) return res.redirect('/?error=auth_failed');
+
+        const userResponse = await fetch('https://discord.com/api/users/@me', {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` }
+        });
+        const discordUser = await userResponse.json();
+
+        const user = await dbGet("SELECT * FROM users WHERE id = ?", [tempUserId]);
+        if (!user) return res.redirect('/?error=user_not_found');
+
+        if (user.discord_id && user.discord_id !== discordUser.id) {
+            return res.redirect('/?error=already_linked');
+        }
+
+        if (!user.discord_id) {
+            return res.redirect('/?error=not_linked');
+        }
+
+        await dbRun(
+            "UPDATE users SET username = ?, avatar_url = ?, last_login = CURRENT_TIMESTAMP, ip_address = ? WHERE id = ?",
+            [discordUser.username, `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`, req.ip, user.id]
+        );
+
+        req.session.isClient = true;
+        req.session.userId = user.id;
+        req.session.userKey = user.license_key;
+        delete req.session.tempKey;
+        delete req.session.tempUserId;
+        logAction('DISCORD_LOGIN', `Login Discord: ${discordUser.username} (${user.license_key})`, req.ip);
+
+        res.redirect('/client');
+    } catch (e) {
+        console.error("Erro OAuth2 Discord:", e);
+        res.redirect('/?error=server_error');
+    }
+});
+
 app.get('/', (req, res) => {
     if (req.session.isAdmin) {
         return res.sendFile(path.join(__dirname, 'private/admin.html'));
@@ -431,19 +515,25 @@ app.get('/api/client/settings', requireClient, async (req, res) => {
 
 app.get('/api/client/users', requireClient, async (req, res) => {
     try {
-        const users = await dbAll("SELECT username, avatar_url FROM users ORDER BY id DESC LIMIT 50");
+        const users = await dbAll("SELECT id, username, avatar_url, discord_id, created_at FROM users ORDER BY id DESC LIMIT 50");
         const admins = await dbAll("SELECT username, role FROM admins");
         
         const all = [
             ...admins.map(a => ({ 
+                id: -1,
                 username: a.username, 
                 role: a.role || 'admin', 
-                avatar_url: 'https://cdn.discordapp.com/embed/avatars/1.png'
+                avatar_url: 'https://cdn.discordapp.com/embed/avatars/1.png',
+                discord_id: null,
+                created_at: null
             })),
             ...users.map(u => ({ 
+                id: u.id,
                 username: u.username, 
                 role: 'cliente', 
-                avatar_url: u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'
+                avatar_url: u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png',
+                discord_id: u.discord_id || null,
+                created_at: u.created_at
             }))
         ];
         

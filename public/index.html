@@ -262,9 +262,21 @@
                     <i class="fas fa-key"></i>
                 </div>
             </div>
-            <button onclick="auth('client')">
-                Acessar Sistema <i class="fas fa-arrow-right" style="margin-left:6px;font-size:12px"></i>
-            </button>
+            <div style="position:relative;margin-top:12px;text-align:center">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                    <div style="flex:1;height:1px;background:var(--border)"></div>
+                    <span style="color:var(--text-muted);font-size:11px;font-weight:500;letter-spacing:0.5px">ENTRE COM</span>
+                    <div style="flex:1;height:1px;background:var(--border)"></div>
+                </div>
+                <button onclick="authDiscord()" style="background:#5865F2;color:#fff;margin-top:0">
+                    <i class="fab fa-discord"></i>&nbsp; Discord
+                </button>
+                <div style="margin-top:8px">
+                    <button onclick="auth('client')" style="background:transparent;color:var(--text-muted);font-weight:400;font-size:12px;padding:8px;margin:0;width:auto">
+                        Entrar só com a Key <i class="fas fa-arrow-right" style="margin-left:4px;font-size:10px"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="admin-form" style="display:none">
@@ -336,6 +348,19 @@
 
         window.addEventListener('load', () => {
             setTimeout(() => notificationSystem.info('KALI MODS', 'Bem-vindo ao portal de acesso seguro'), 1000);
+            const params = new URLSearchParams(window.location.search);
+            const err = params.get('error');
+            if (err === 'not_linked') {
+                notificationSystem.error('Discord não vinculado', 'Use o comando /ativar no Discord para vincular sua key primeiro.');
+            } else if (err === 'session_expired') {
+                notificationSystem.error('Sessão expirada', 'Tente novamente digitando sua key.');
+            } else if (err === 'already_linked') {
+                notificationSystem.error('Conta já vinculada', 'Este Discord já está vinculado a outra key.');
+            } else if (err === 'auth_failed' || err === 'no_code') {
+                notificationSystem.error('Autenticação falhou', 'Não foi possível autenticar com o Discord.');
+            } else if (err === 'server_error') {
+                notificationSystem.error('Erro no servidor', 'Ocorreu um erro interno. Tente novamente.');
+            }
         });
 
         function sw(t) {
@@ -350,6 +375,40 @@
         }
 
         let adminStep = 'credentials';
+
+        async function authDiscord() {
+            const key = document.getElementById('key').value.trim();
+            if (!key) {
+                notificationSystem.error('Key necessária', 'Digite sua licença para continuar');
+                return;
+            }
+
+            const btn = event.currentTarget;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Autenticando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/auth/discord/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key })
+                });
+                const d = await res.json();
+
+                if (d.success && d.redirect) {
+                    location.href = d.redirect;
+                } else {
+                    notificationSystem.error('Falha na Autenticação', d.error || 'Erro ao autenticar');
+                    btn.innerHTML = orig;
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                notificationSystem.error('Erro de Conexão', 'Não foi possível conectar ao servidor.');
+                btn.innerHTML = orig;
+                btn.disabled = false;
+            }
+        }
 
         async function auth(type) {
             const btn = event.target.closest('button');

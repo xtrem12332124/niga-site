@@ -24,6 +24,65 @@
             --font-mono: 'JetBrains Mono', monospace;
             --ease: cubic-bezier(0.23, 1, 0.32, 1);
         }
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center; align-items: center;
+            animation: fadeIn 0.2s var(--ease);
+        }
+        .modal-overlay.show { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px;
+            width: 100%; max-width: 380px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            animation: modalIn 0.3s var(--ease);
+            position: relative;
+        }
+        @keyframes modalIn { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .modal-close {
+            position: absolute; top: 14px; right: 14px;
+            background: rgba(255,255,255,0.04); border: none; color: var(--text-muted);
+            width: 32px; height: 32px; border-radius: 8px;
+            cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .modal-avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid var(--border);
+            margin: 0 auto 16px;
+            object-fit: cover;
+        }
+        .modal-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .modal-role-badge {
+            display: inline-block;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+            padding: 4px 14px; border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        .modal-info {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: left;
+        }
+        .modal-info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+        }
+        .modal-info-row:last-child { border-bottom: none; }
+        .modal-info-label { color: var(--text-muted); }
+        .modal-info-value { color: #fff; font-size: 12px; word-break: break-all; }
         body {
             font-family: var(--font);
             background: var(--bg);
@@ -397,6 +456,25 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeProfile()"><i class="fas fa-times"></i></button>
+            <img class="modal-avatar" id="modal-avatar" src="">
+            <div class="modal-name" id="modal-name">---</div>
+            <div class="modal-role-badge" id="modal-role">CLIENTE</div>
+            <div class="modal-info">
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Discord ID</span>
+                    <span class="modal-info-value" id="modal-discord">---</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="modal-info-label">Membro desde</span>
+                    <span class="modal-info-value" id="modal-created">---</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let userData = {};
 
@@ -510,6 +588,31 @@
             } catch (e) { console.error(e); }
         }
 
+        function openProfile(u) {
+            document.getElementById('modal-avatar').src = u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+            document.getElementById('modal-name').textContent = u.username || 'Usuário';
+            const isStaff = u.role === 'owner' || u.role === 'admin';
+            const badge = document.getElementById('modal-role');
+            badge.textContent = u.role ? u.role.toUpperCase() : 'CLIENTE';
+            badge.style.background = isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+            badge.style.color = isStaff ? '#fff' : '#888';
+            document.getElementById('modal-discord').textContent = u.discord_id || 'Não vinculado';
+            document.getElementById('modal-created').textContent = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '---';
+            document.getElementById('profile-modal').classList.add('show');
+        }
+
+        function closeProfile() {
+            document.getElementById('profile-modal').classList.remove('show');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeProfile();
+        });
+
+        document.getElementById('profile-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeProfile();
+        });
+
         async function loadCommunity() {
             const container = document.getElementById('community-list');
             container.innerHTML = '<div style="color:#666;font-size:14px;">Carregando...</div>';
@@ -527,7 +630,7 @@
                 container.innerHTML = users.map(u => {
                     const isStaff = u.role === 'owner' || u.role === 'admin';
                     return `
-                        <div class="user-mini">
+                        <div class="user-mini" onclick='openProfile(${JSON.stringify(u).replace(/'/g, "\\'")})' style="cursor:pointer">
                             <img src="${u.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}">
                             <div style="font-weight:600;color:#fff;">${u.username || 'Usuário'}</div>
                             <div class="user-role-badge" style="background:${isStaff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)'}; color: ${isStaff ? '#fff' : '#888'}">
