@@ -219,7 +219,23 @@ async function registerCommands(clientId, token) {
             ),
         new SlashCommandBuilder()
             .setName('mykey')
-            .setDescription('Status da sua key')
+            .setDescription('Status da sua key'),
+        new SlashCommandBuilder()
+            .setName('criarkey')
+            .setDescription('[Admin] Criar uma nova key de licença')
+            .addIntegerOption(option =>
+                option.setName('dias')
+                    .setDescription('Duração da key')
+                    .setRequired(true)
+                    .addChoices(
+                        { name: '1 Dia', value: 1 },
+                        { name: '7 Dias', value: 7 },
+                        { name: '30 Dias', value: 30 },
+                        { name: '90 Dias', value: 90 },
+                        { name: '120 Dias', value: 120 },
+                        { name: '999 Dias', value: 999 },
+                    )
+            )
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(token);
@@ -305,6 +321,36 @@ client.on('interactionCreate', async interaction => {
                     { name: 'Status', value: row.is_banned ? '<:4702discordcrossemoji:1449850940738900190> Banido' : '<:5483discordticemoji:1449850946182971412> Ativo', inline: true }
                 )
                 .setThumbnail(row.avatar_url);
+
+            return interaction.editReply({ embeds: [embed] });
+        }
+
+        if (interaction.commandName === 'criarkey') {
+            const config = await getBotConfig();
+            const ownerId = config.owner_id;
+            if (!ownerId || interaction.user.id !== ownerId) {
+                return interaction.editReply('❌ Apenas o dono do bot pode usar este comando.');
+            }
+
+            const days = interaction.options.getInteger('dias');
+            const key = "HK-" + crypto.randomBytes(4).toString('hex').toUpperCase();
+            const date = new Date();
+            date.setDate(date.getDate() + days);
+            const expiryDate = date.toISOString().split('T')[0];
+
+            await dbRun(
+                "INSERT INTO users (license_key, expiry_date) VALUES (?, ?)",
+                [key, expiryDate]
+            );
+
+            const embed = new EmbedBuilder()
+                .setColor(0x1E40AF)
+                .setTitle('✅ Key Criada')
+                .addFields(
+                    { name: 'Key', value: `||${key}||`, inline: true },
+                    { name: 'Duração', value: `${days} dias`, inline: true },
+                    { name: 'Expira em', value: expiryDate, inline: true }
+                );
 
             return interaction.editReply({ embeds: [embed] });
         }
