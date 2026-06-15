@@ -384,6 +384,28 @@ app.use(session({
     cookie: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' }
 }));
 
+const checkMaintenance = async (req, res, next) => {
+    if (req.session && req.session.isAdmin) return next();
+    if (req.path === '/api/maintenance-status' || req.path === '/api/emergency-unban') return next();
+    if (req.path.startsWith('/auth/')) return next();
+    try {
+        const row = await dbGet("SELECT value FROM settings WHERE key = 'maintenance'");
+        if (row && row.value === 'true') {
+            if (req.accepts('html')) {
+                return res.status(503).send(`<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Manutenção</title><style>body{background:#0b0b0e;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;margin:0}.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:50px;border-radius:20px;max-width:400px}.icon{font-size:48px;margin-bottom:16px;opacity:0.4}h1{font-size:22px;font-weight:700;margin-bottom:8px}p{color:#888;font-size:14px;line-height:1.6}</style></head><body><div class="card"><div class="icon">🔧</div><h1>Sistema em Manutenção</h1><p>Estamos realizando atualizações.<br>Volte em alguns minutos.</p></div></body></html>`);
+            }
+            return res.status(503).json({ success: false, error: 'Sistema em manutenção' });
+        }
+    } catch (e) {}
+    next();
+};
+app.use(checkMaintenance);
+
+app.get('/api/maintenance-status', async (req, res) => {
+    const row = await dbGet("SELECT value FROM settings WHERE key = 'maintenance'");
+    res.json({ maintenance: row && row.value === 'true' });
+});
+
 // Discord OAuth2
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';

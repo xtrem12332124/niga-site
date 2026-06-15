@@ -295,6 +295,12 @@
     <div id="modal-days" class="modal-overlay"><div class="modal"><i class="fas fa-calendar-plus modal-icon" style="opacity:0.6"></i><h2>Adicionar Dias</h2><p>Quantos dias deseja adicionar?</p><input type="number" id="modal-days-input" value="7" style="margin:12px 0; text-align:center; font-size:18px;"><div style="display:flex; gap:10px; justify-content:center"><button onclick="closeModal('modal-days')" style="background:#222; color:#fff">Cancelar</button><button class="btn-primary" onclick="confirmAddDays()">Confirmar</button></div></div></div>
     <div id="modal-key" class="modal-overlay"><div class="modal"><i class="fas fa-check-circle modal-icon" style="color:var(--success);opacity:1"></i><h2>Key Gerada!</h2><p>Copie a licença abaixo:</p><div class="key-display-box"><input type="text" id="generated-key-input" readonly><button onclick="copyGeneratedKey()"><i class="fas fa-copy"></i></button></div><button class="btn-primary" onclick="closeModal('modal-key')">Concluído</button></div></div>
 
+    <div id="maint-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:#0b0b0e;backdrop-filter:blur(10px);justify-content:center;align-items:center;flex-direction:column;gap:16px">
+        <div style="font-size:48px;opacity:0.4">🔧</div>
+        <div style="font-size:22px;font-weight:700;color:#fff">Sistema em Manutenção</div>
+        <div style="color:#888;font-size:14px">Estamos realizando atualizações.<br>Volte em alguns minutos.</div>
+    </div>
+
     <script>
         let usersData = [], maint = false, chartInstance = null, currentUserId = null;
         let myRole = 'admin';
@@ -528,6 +534,7 @@
             openConfirmAction(maint ? "Liberar?" : "Bloquear?", maint ? "Restaurar acesso do sistema." : "Interromper acesso ao sistema.", async () => {
                 maint = !maint;
                 await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maintenance: maint.toString() }) });
+                document.getElementById('maint-overlay').style.display = maint ? 'flex' : 'none';
                 renderMaint();
                 showToast('success', 'Status alterado!');
                 closeModal('modal-confirm');
@@ -668,6 +675,16 @@
 
         loadAdminInfo();
         loadDash();
+
+        async function checkMaintenance() {
+            try {
+                const res = await fetch('/api/maintenance-status');
+                const data = await res.json();
+                document.getElementById('maint-overlay').style.display = data.maintenance ? 'flex' : 'none';
+            } catch (e) {}
+        }
+        setInterval(checkMaintenance, 8000);
+        setTimeout(checkMaintenance, 1000);
     </script>
 </body>
 </html>
