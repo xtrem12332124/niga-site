@@ -413,9 +413,11 @@ app.get('/auth/discord/callback', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.redirect('/?error=no_code');
 
+    const tempAdmin = req.session.tempAdmin;
     const tempKey = req.session.tempKey;
     const tempUserId = req.session.tempUserId;
-    if (!tempKey || !tempUserId) return res.redirect('/?error=session_expired');
+
+    if (!tempKey && !tempAdmin) return res.redirect('/?error=session_expired');
 
     try {
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
@@ -437,6 +439,15 @@ app.get('/auth/discord/callback', async (req, res) => {
             headers: { Authorization: `Bearer ${tokenData.access_token}` }
         });
         const discordUser = await userResponse.json();
+
+        if (tempAdmin) {
+            req.session.isAdmin = true;
+            req.session.adminRole = tempAdmin.role;
+            req.session.adminName = tempAdmin.username;
+            delete req.session.tempAdmin;
+            logAction('ADMIN_DISCORD_LOGIN', `Admin ${tempAdmin.username} autenticou com Discord`, req.ip);
+            return res.redirect('/admin');
+        }
 
         const user = await dbGet("SELECT * FROM users WHERE id = ?", [tempUserId]);
         if (!user) return res.redirect('/?error=user_not_found');
@@ -568,10 +579,9 @@ app.post('/auth/admin/login', async (req, res) => {
         }
     }
 
-    req.session.isAdmin = true;
-    req.session.adminRole = admin.role || 'admin';
-    req.session.adminName = admin.username;
-    return res.json({ success: true, redirect: '/admin' });
+    req.session.tempAdmin = { username: admin.username, role: admin.role };
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+    return res.json({ success: true, redirect: authUrl });
 });
 
 app.post('/auth/client/login', async (req, res) => {
