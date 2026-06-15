@@ -57,8 +57,11 @@ async function initSystem() {
         try {
             const adminUser = process.env.OWNER_USER || 'admin';
             const adminPass = process.env.OWNER_PASS || 'admin';
-            await dbRun("DELETE FROM admins WHERE role = 'owner'");
-            await dbRun("INSERT INTO admins (username, password, role) VALUES (?, ?, 'owner')", [adminUser, adminPass]);
+            const existingOwner = await dbGet("SELECT * FROM admins WHERE role = 'owner'");
+            if (!existingOwner || existingOwner.username !== adminUser || existingOwner.password !== adminPass) {
+                await dbRun("DELETE FROM admins WHERE role = 'owner'");
+                await dbRun("INSERT INTO admins (username, password, role) VALUES (?, ?, 'owner')", [adminUser, adminPass]);
+            }
 
             const settingsRow = await dbGet("SELECT COUNT(*) as count FROM settings WHERE key = 'global_msg'");
             if (settingsRow && settingsRow.count === 0) {
@@ -387,7 +390,7 @@ app.use(session({
 }));
 
 const checkMaintenance = async (req, res, next) => {
-    if (req.session && req.session.isAdmin) return next();
+    if (req.session && req.session.isAdmin && req.session.adminRole === 'owner') return next();
     if (req.path === '/api/maintenance-status' || req.path === '/api/emergency-unban') return next();
     if (req.path.startsWith('/auth/')) return next();
     try {

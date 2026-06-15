@@ -534,7 +534,7 @@
             openConfirmAction(maint ? "Liberar?" : "Bloquear?", maint ? "Restaurar acesso do sistema." : "Interromper acesso ao sistema.", async () => {
                 maint = !maint;
                 await fetch('/api/admin/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maintenance: maint.toString() }) });
-                document.getElementById('maint-overlay').style.display = maint ? 'flex' : 'none';
+                if (myRole !== 'owner') document.getElementById('maint-overlay').style.display = maint ? 'flex' : 'none';
                 renderMaint();
                 showToast('success', 'Status alterado!');
                 closeModal('modal-confirm');
@@ -677,6 +677,7 @@
         loadDash();
 
         async function checkMaintenance() {
+            if (myRole === 'owner') return;
             try {
                 const res = await fetch('/api/maintenance-status');
                 const data = await res.json();
